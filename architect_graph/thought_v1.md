@@ -204,3 +204,33 @@ class JokerState(TypedDict):
                                 (direction=both?)
                                  ├─ Yes → info_symmetry → summary → END
                                  └─ No  → summary → END
+
+## 问题
+1. 就是evidence节点和alternative节点因为寄生于all_claims参数，这就导致这两个节点的返回的dict：
+{"all_claims":{
+     "content": XXXX
+}}
+
+这个content必须和原来的验证的或者进行替代性解释的Claim的content完全==，否则就会直接当成新的Claim来处理了
+但是这个如何能保障呢？LLM的prompt还有tool都无法完全限制!
+
+改法：
+待定？
+
+2. summary入边节点深度不同
+如果information节点不经过contradictory节点，而是直接到summary，那么与之并行的evidence和alternative节点和information的深度就不同，就会导致summary一次调用返回的不完整，必须进行两次调用，显然不是上策。
+
+改法；
+evidence, alternative, information并行，然后都到contradictory节点
+然后再由contradictory交给summary节点，
+如下图所示，新的架构图
+  supervisor ══(条件边, 按 next_agents 列表)══▶ evidence
+                                            ├─▶ alternative_explanation
+                                            └─▶ information_symmetry
+                                                      │
+          evidence ─────────┐                         │
+          alternative ──────┼──(静态边)──▶ contradictory ◀──(静态边)─┘
+                            │                    │
+                            └────────────────────┘
+                                                 ▼
+                                              summary ──▶ END

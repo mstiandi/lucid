@@ -1,5 +1,6 @@
 """
-监管节点，决定下一步路由到那些agent，根据JokerState中的all_claims参数返回next_agents参数
+监管节点，决定下一步路由到那些agent，根据JokerState中的all_claims参数返回next_agents参数。
+纯代码，不需要调用模型
 """
 
 from ..state.JokerState import JokerState

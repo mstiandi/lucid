@@ -47,7 +47,7 @@ all_signals如下：
         "behaviors": [{
             "action": "邀请她一起去黄山旅游",
             "signal_type": "旅行邀约",
-            "confidence": 1.0
+            "confidence": 1.0,
             "source_ref": "我在去年夏天邀请她去黄山旅行"
         }]
     },
@@ -58,7 +58,7 @@ all_signals如下：
         "behaviors": [{
             "action": "拒绝用户提出的黄山之旅邀约",
             "signal_type": "拒绝旅行邀约",
-            "confidence": 1.0
+            "confidence": 1.0,
             "source_ref": "但是她明确表示拒绝了，说我们不太合适一起旅行"
     }]
 }}}
