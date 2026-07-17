@@ -52,9 +52,15 @@ def all_signals_reducer(old_signals: dict | None, new_signals: dict | None) -> d
                 existing_keys.add(key)
 
     # 更新 initiative_score、emotional_explicitness、signal_clarity
+    # v2: 加权平均代替直接覆盖。首轮（旧值=0.0）→ 全量采用；增量 → 旧 0.7 + 新 0.3
     for person in ["user", "ta"]:
         for parameter in ['initiative_score', 'emotional_explicitness', 'signal_clarity']:
             if parameter in new_signals.get(person, {}):
-                old_signals[person][parameter] = new_signals[person][parameter]
+                old_val = old_signals[person].get(parameter, 0.0)
+                new_val = new_signals[person][parameter]
+                if old_val == 0.0:
+                    old_signals[person][parameter] = new_val
+                else:
+                    old_signals[person][parameter] = round(old_val * 0.7 + new_val * 0.3, 2)
 
     return old_signals

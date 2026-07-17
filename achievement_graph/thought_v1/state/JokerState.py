@@ -56,3 +56,4 @@ class JokerState(TypedDict):
     info_symmetry: Annotated[dict[str, InfoSymmetryItem], info_symmetry_reducer]
     next_agents: list[str]
     new_signals: bool  # 覆盖
+    alt_gaps: list[str]  # 替代解释节点未能产出的 claim content 列表，供 summary 警告用户

@@ -31,6 +31,12 @@ def all_claims_reducer(old_claims: list | None, new_claims: list | None) -> list
     old_claims_dict = {claim["content"]: claim for claim in old_claims} # 已经存在的claims
     for claim in new_claims:
         if claim["content"] not in old_claims_dict:
+            # 新 claim → 补齐默认字段
+            claim.setdefault("direction", "single")
+            claim.setdefault("analysed_by", [])
+            claim.setdefault("status", "pending")
+            claim.setdefault("evidence_from_signals", {})
+            claim.setdefault("alternative_explanations", {})
             old_claims_dict[claim["content"]] = claim
         else:
             # 如果已经存在，则更新evidence_from_signals和alternative_explanations
