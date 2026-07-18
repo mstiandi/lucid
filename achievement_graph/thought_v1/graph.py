@@ -6,6 +6,7 @@ from .state.JokerState import JokerState # 这个点.应该是相对于当前的
 from langgraph.graph import StateGraph
 from .nodes import alternative_explanation_node, contradictory_registration_node, evidence_node, information_symmetry_node, preprocess_node, supervisor_node, summary_node, signals_node
 from langgraph.checkpoint.memory import MemorySaver
+from tools.memory import SqliteStore
 
 VALID_AGENTS = {
     "evidence_agent": "evidence_node",
@@ -44,4 +45,4 @@ graph.add_edge("information_symmetry_node", "contradictory_registration_node")
 graph.add_edge("contradictory_registration_node", "summary_node")
 graph.add_edge("summary_node", "__end__")
 
-app = graph.compile(checkpointer = MemorySaver())
+app = graph.compile(checkpointer=MemorySaver(), store=SqliteStore("joker_store.db"))

@@ -3,14 +3,13 @@
 LLM 回答 3 道选择题，Python 根据答案计算 credit_score。
 """
 
-import json
-
 from ..state.JokerState import JokerState, Claim, EvidenceItem
 from langchain.tools import tool
-from langchain.messages import SystemMessage, HumanMessage
+from langchain.messages import SystemMessage
 from tools.loader.load_prompts import load_prompt
 from tools.llm.deepseek_llm import llm
 from tools.llm.safe_llm_call import safe_llm_call
+from tools.context.prompt_builder import build_prompt
 
 
 # === Checklist 选项 → 分值 ===
@@ -128,13 +127,13 @@ def evidence_node(state: JokerState) -> dict:
         return {}
 
     needed_claims = "\n".join([f"#{i}  Claim: {c['content']}" for i, c in enumerate(pending_claims)])
-    all_signals = state.get('all_signals', {})
 
-    prompt = (
-        load_prompt("evidence_prompt.md") +
-        "\n\n所有status为pending的待验证的claims如下（每条前面有编号）：\n" + needed_claims +
-        "\n\n请在返回值中给每个 claim 带上 \"claim_index\" 字段，值为对应编号（如 0, 1, ...）。"
-        "\n所有的信号如下:\n" + json.dumps(all_signals, ensure_ascii=False, indent=2)
+    prompt = build_prompt(
+        node_name="evidence_node",
+        system_prompt=load_prompt("evidence_prompt.md"),
+        all_signals=state.get("all_signals"),
+        claims_text="所有status为pending的待验证的claims如下（每条前面有编号）：\n" + needed_claims,
+        extra="请在返回值中给每个 claim 带上 \"claim_index\" 字段，值为对应编号（如 0, 1, ...）。",
     )
 
     response = safe_llm_call(llm, [evidence_return],

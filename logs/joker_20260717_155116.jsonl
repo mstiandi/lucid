@@ -1,0 +1,10 @@
+{"ts": "2026-07-17T15:52:25", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"tokens": 2155, "retries": 0, "latency": 3.9}}
+{"ts": "2026-07-17T15:52:48", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功", "data": {"tokens": 6903, "retries": 0, "latency": 22.3}}
+{"ts": "2026-07-17T15:52:52", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 4 条替代解释", "data": {"coverage": 4}}
+{"ts": "2026-07-17T15:52:56", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"tokens": 3489, "retries": 0, "latency": 8.9}}
+{"ts": "2026-07-17T15:53:34", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"tokens": 2203, "retries": 0, "latency": 4.6}}
+{"ts": "2026-07-17T15:53:37", "level": "WARN", "node": "ALTERNATIVE", "msg": "JSON 解析失败或 all_claims 缺失", "data": {"attempt": 1}}
+{"ts": "2026-07-17T15:53:40", "level": "WARN", "node": "EVIDENCE", "msg": "tool_calls 为空，重试中", "data": {"attempt": "1/2"}}
+{"ts": "2026-07-17T15:53:40", "level": "WARN", "node": "ALTERNATIVE", "msg": "1 个 claim 无替代解释", "data": {"claims": ["她会主动延展话题"]}}
+{"ts": "2026-07-17T15:53:40", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 3 条替代解释", "data": {"coverage": 1}}
+{"ts": "2026-07-17T15:53:47", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"tokens": 3095, "retries": 1, "latency": 13.4}}

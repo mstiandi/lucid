@@ -9,8 +9,9 @@ from ..state.JokerState import JokerState, Claim, AlternativeItem
 from tools.loader.load_prompts import load_prompt
 from tools.llm.deepseek_llm import llm
 from tools.llm.safe_llm_call import safe_llm_call
+from tools.context.prompt_builder import build_prompt
 from tools.logger import get_logger
-from langchain.messages import SystemMessage, HumanMessage
+from langchain.messages import SystemMessage
 
 
 def _parse_index(raw) -> int | None:
@@ -110,14 +111,13 @@ def alternative_explanation_node(state: JokerState) -> dict:
         return {}
 
     needed_claims = "\n".join([f"#{i}  Claim: {c['content']}" for i, c in enumerate(pending_claims)])
-    all_signals = state.get("all_signals", {})
 
-    base_prompt = load_prompt("alternative_explanation_prompt.md")
-    prompt = (
-        base_prompt +
-        "\n\n所有status为pending的待验证的claims如下（每条前面有编号）：\n" + needed_claims +
-        "\n\n所有的信号如下:\n" + json.dumps(all_signals, ensure_ascii=False, indent=2) +
-        "\n\n【只返回JSON，不要任何其他文字。返回格式：{\"all_claims\": [...]}】"
+    prompt = build_prompt(
+        node_name="alternative_explanation_node",
+        system_prompt=load_prompt("alternative_explanation_prompt.md"),
+        all_signals=state.get("all_signals"),
+        claims_text="所有status为pending的待验证的claims如下（每条前面有编号）：\n" + needed_claims,
+        extra="【只返回JSON，不要任何其他文字。返回格式：{\"all_claims\": [...]}】",
     )
 
     # DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 LLM + JSON 解析

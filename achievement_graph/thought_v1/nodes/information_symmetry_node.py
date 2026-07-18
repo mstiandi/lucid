@@ -2,13 +2,12 @@
 信息对称性节点 v2：checklist → 代码判定 is_sufficient + 输出校验
 """
 
-import json
-
 from ..state.JokerState import JokerState, InfoSymmetryItem
 from langchain.tools import tool
 from tools.loader.load_prompts import load_prompt
 from tools.llm.deepseek_llm import llm
 from tools.llm.safe_llm_call import safe_llm_call
+from tools.context.prompt_builder import build_prompt
 from langchain.messages import SystemMessage
 
 
@@ -87,12 +86,12 @@ def information_symmetry_node(state: JokerState) -> dict:
         return {}
 
     needed_claims = "\n".join([f"#{i}  Claim: {c['content']}" for i, c in enumerate(info_symmetry_claims)])
-    all_signals = state.get("all_signals", {})
 
-    prompt = (
-        load_prompt("information_symmetry_prompt.md") +
-        "\n\n所有direction为both的待处理的claims如下（每条前面有编号）：\n" + needed_claims +
-        "\n\n所有的信号如下:\n" + json.dumps(all_signals, ensure_ascii=False, indent=2)
+    prompt = build_prompt(
+        node_name="information_symmetry_node",
+        system_prompt=load_prompt("information_symmetry_prompt.md"),
+        all_signals=state.get("all_signals"),
+        claims_text="所有direction为both的待处理的claims如下（每条前面有编号）：\n" + needed_claims,
     )
 
     response = safe_llm_call(llm, [information_symmetry_return],
