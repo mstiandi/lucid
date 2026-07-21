@@ -40,7 +40,7 @@ def preprocess_return(new_signals: bool, claims: list[dict]) -> dict:
     return {"new_signals": new_signals, "claims": claims}
 
 
-def preprocess_node(state: JokerState) -> dict:
+def preprocess_node(state: JokerState, *, store=None) -> dict:
     human_message = state['messages'][-1] if state['messages'] else "没有消息"
     human_message = human_message.content if hasattr(human_message, 'content') else human_message
 
@@ -67,4 +67,17 @@ def preprocess_node(state: JokerState) -> dict:
         c.setdefault("evidence_from_signals", {})
         c.setdefault("alternative_explanations", {})
 
-    return {"new_signals": new_signals, "all_claims": claims}
+    result = {"new_signals": new_signals, "all_claims": claims}
+
+    # 长期记忆加载：当前 state 无历史 → 从 Store 恢复 profile
+    if store:
+        has_history = bool(
+            state.get('all_signals', {}).get('user', {}).get('behaviors')
+            or state.get('all_signals', {}).get('ta', {}).get('behaviors')
+        )
+        if not has_history:
+            profile = store.get(("profiles", "main", "signals"), "latest")
+            if profile:
+                result["all_signals"] = profile.value
+
+    return result

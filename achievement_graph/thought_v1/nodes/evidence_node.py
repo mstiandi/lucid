@@ -10,6 +10,7 @@ from tools.loader.load_prompts import load_prompt
 from tools.llm.deepseek_llm import llm
 from tools.llm.safe_llm_call import safe_llm_call
 from tools.context.prompt_builder import build_prompt
+from tools.rag import retrieve_theories
 
 
 # === Checklist 选项 → 分值 ===
@@ -128,12 +129,15 @@ def evidence_node(state: JokerState) -> dict:
 
     needed_claims = "\n".join([f"#{i}  Claim: {c['content']}" for i, c in enumerate(pending_claims)])
 
+    theory_context = retrieve_theories(pending_claims, top_k=3)
+
     prompt = build_prompt(
         node_name="evidence_node",
         system_prompt=load_prompt("evidence_prompt.md"),
         all_signals=state.get("all_signals"),
         claims_text="所有status为pending的待验证的claims如下（每条前面有编号）：\n" + needed_claims,
         extra="请在返回值中给每个 claim 带上 \"claim_index\" 字段，值为对应编号（如 0, 1, ...）。",
+        theory_context=theory_context,
     )
 
     response = safe_llm_call(llm, [evidence_return],

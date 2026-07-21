@@ -18,9 +18,10 @@ from tools.llm.deepseek_llm import llm
 from tools.logger import get_logger
 from langchain.messages import SystemMessage, AIMessage
 
-def summary_node(state: JokerState) -> dict:
+def summary_node(state: JokerState, *, store=None) -> dict:
     """
     总结节点，对本轮对话进行总结，返回AIMessage，同时将所有的claims的status更新为analysed。
+    分析完成后将 all_signals + summary 写入长期记忆 Store。
     """
     pending_claims = [c for c in state['all_claims'] if c.get('status', 'pending') == 'pending']
     # 提取所有的contradictions
@@ -65,5 +66,17 @@ def summary_node(state: JokerState) -> dict:
 
     if response is None:
         response = AIMessage(content="抱歉，总结生成失败，请重新发送消息。")
+
+    # 长期记忆写入：每轮分析完成后持久化 all_signals + summary
+    if store:
+        import time as _time
+        store.put(("profiles", "main", "signals"), "latest", {
+            "user": state["all_signals"]["user"],
+            "ta": state["all_signals"]["ta"],
+        })
+        store.put(("timeline", "main"), f"round_{int(_time.time())}", {
+            "summary": response.content if response else "",
+            "claims": [c["content"] for c in pending_claims],
+        })
 
     return {"messages": [response], "all_claims": updated_claims}

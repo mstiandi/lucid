@@ -10,6 +10,7 @@ from tools.loader.load_prompts import load_prompt
 from tools.llm.deepseek_llm import llm
 from tools.llm.safe_llm_call import safe_llm_call
 from tools.context.prompt_builder import build_prompt
+from tools.rag import retrieve_theories
 from tools.logger import get_logger
 from langchain.messages import SystemMessage
 
@@ -118,6 +119,7 @@ def alternative_explanation_node(state: JokerState) -> dict:
         all_signals=state.get("all_signals"),
         claims_text="所有status为pending的待验证的claims如下（每条前面有编号）：\n" + needed_claims,
         extra="【只返回JSON，不要任何其他文字。返回格式：{\"all_claims\": [...]}】",
+        theory_context=retrieve_theories(pending_claims, top_k=3),
     )
 
     # DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 LLM + JSON 解析

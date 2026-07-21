@@ -64,12 +64,17 @@ def build_prompt(
     all_signals: dict | None = None,
     claims_text: str = "",
     extra: str = "",
+    theory_context: str = "",
 ) -> str:
     """
     组装 prompt，并根据 token 预算决定是否压缩 all_signals。
+
+    theory_context: 从 RAG 检索到的理论卡片文本，插在 system_prompt 之后、claims 之前。
     """
     # 1. 组装 prompt
     parts = [system_prompt]
+    if theory_context:
+        parts.append(theory_context)
     if claims_text:
         parts.append(claims_text)
     if all_signals:
@@ -92,6 +97,8 @@ def build_prompt(
     for keep_recent in [5, 0]:
         compressed_signals = compress_signals(all_signals, keep_recent=keep_recent)
         compressed_parts = [system_prompt]
+        if theory_context:
+            compressed_parts.append(theory_context)
         if claims_text:
             compressed_parts.append(claims_text)
         if compressed_signals:
