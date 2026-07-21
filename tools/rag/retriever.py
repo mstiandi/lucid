@@ -20,6 +20,21 @@ def _get_store() -> TheoryStore:
 _get_store()
 
 
+def retrieve_theories_raw(claims: list[dict], top_k: int = 3) -> list[dict]:
+    """
+    同 retrieve_theories 但不格式化——返回原始卡片 dict 列表，用于评估召回率。
+    """
+    if not claims:
+        return []
+
+    query = " ".join([c.get("content", "") for c in claims if c.get("content", "")])
+    if not query.strip():
+        return []
+
+    store = _get_store()
+    return store.search(query, top_k=top_k)
+
+
 def retrieve_theories(claims: list[dict], top_k: int = 3) -> str:
     """
     输入 pending claims → 检索 top_k 理论卡片 → 返回格式化的 prompt 文本。
@@ -51,7 +66,13 @@ def retrieve_theories(claims: list[dict], top_k: int = 3) -> str:
 
 def _format_cards(cards: list[dict]) -> str:
     """将卡片列表格式化为 prompt 可注入的文本块。"""
-    lines = ["## 参考心理学理论\n"]
+    lines = [
+        "## 心理学理论工具（不是参考——你必须使用）\n",
+        "以下是通过语义检索匹配到的心理学理论。在你的分析中，你必须：\n",
+        "- 至少引用一条理论来解释用户认知偏差的机制\n",
+        "- 用理论名称明确标注你用的是哪条理论（如：这是典型的基本归因错误）\n",
+        "- 不只是在分析末尾贴一个理论名字——要把理论的核心逻辑应用到对用户具体场景的解释中\n",
+    ]
     for i, card in enumerate(cards, 1):
         name = card.get("name", "?")
         category = card.get("category", "")

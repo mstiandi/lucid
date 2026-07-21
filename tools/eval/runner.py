@@ -1,0 +1,236 @@
+# -*- coding: utf-8 -*-
+"""
+评估 Runner：加载 golden dataset → 每个场景跑 joker graph → 四项评分 → 出报告。
+
+运行方式：
+    cd D:/my_joker
+    python -m tools.eval.runner
+
+要求：
+    - golden_dataset.json 至少有两个完整标注的场景
+    - DEEPSEEK_API_KEY 环境变量已设置
+"""
+
+import json
+import os
+import sys
+import time
+import uuid
+
+# 确保项目根目录在 path 中
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+from langchain.messages import HumanMessage
+
+from achievement_graph.thought_v1.app import graph_app
+from tools.eval.scorer import score_rag, score_structure
+from tools.eval.judge import judge_coverage, judge_correctness
+
+
+# ─── 加载数据集 ───────────────────────────────────────
+
+def _load_dataset(path: str) -> list[dict]:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    valid = []
+    for s in data:
+        desc = s.get("description", "").strip()
+        gt = s.get("ground_truth", {})
+        has_direction = gt.get("expected_direction", "").strip()
+        if desc and has_direction:
+            valid.append(s)
+        else:
+            name = s.get("name") or s.get("id")
+            print(f"  [skip] {name} (not annotated)")
+    return valid
+
+
+# ─── 跑一个场景 ───────────────────────────────────────
+
+def _run_scenario(scenario: dict) -> dict:
+    description = scenario["description"]
+    thread_id = f"eval-{scenario['id']}-{uuid.uuid4().hex[:6]}"
+    config = {"configurable": {"thread_id": thread_id}}
+
+    result = graph_app.invoke(
+        {"messages": [HumanMessage(content=description)]},
+        config=config,
+    )
+    return result
+
+
+# ─── 汇总 ─────────────────────────────────────────────
+
+def _summarize(scenario_results: list[dict]) -> dict:
+    rag1_vals = []
+    rag3_vals = []
+    structural_vals = []
+    coverage_vals = []
+    correctness_vals = []
+
+    for r in scenario_results:
+        s = r["scores"]
+
+        if s["rag"]["recall_1"] is not None:
+            rag1_vals.append(s["rag"]["recall_1"])
+        if s["rag"]["recall_3"] is not None:
+            rag3_vals.append(s["rag"]["recall_3"])
+
+        structural_vals.append(s["structural"]["score"])
+
+        if s["coverage"]["score"] is not None:
+            coverage_vals.append(s["coverage"]["score"])
+
+        correctness_vals.append(s["correctness"]["total"])
+
+    def _avg(vals):
+        return round(sum(vals) / len(vals), 2) if vals else 0
+
+    rag1_avg = _avg(rag1_vals)
+    rag3_avg = _avg(rag3_vals)
+    struct_avg = _avg(structural_vals)
+    coverage_avg = _avg(coverage_vals)
+    correctness_avg = _avg(correctness_vals)
+
+    weighted = round(
+        rag3_avg * 0.25 + struct_avg * 0.20 + coverage_avg * 0.25 + correctness_avg * 0.30,
+        2
+    ) if (rag3_vals or coverage_vals) else 0
+
+    if not rag3_vals and not coverage_vals:
+        weighted = round(struct_avg * 0.40 + correctness_avg * 0.60, 2)
+
+    return {
+        "rag_recall_1_avg": rag1_avg,
+        "rag_recall_3_avg": rag3_avg,
+        "structural_avg": struct_avg,
+        "coverage_avg": coverage_avg,
+        "correctness_avg": correctness_avg,
+        "weighted_total": weighted,
+        "scenario_count": len(scenario_results),
+    }
+
+
+# ─── 主入口 ───────────────────────────────────────────
+
+def run_eval(dataset_path: str | None = None):
+    if dataset_path is None:
+        dataset_path = os.path.join(os.path.dirname(__file__), "golden_dataset.json")
+
+    print("=" * 60)
+    print("Joker v2 Phase 3 — Eval Runner")
+    print("=" * 60)
+
+    # 1. 加载
+    print(f"\n[load] {dataset_path}")
+    scenarios = _load_dataset(dataset_path)
+    if not scenarios:
+        print("[FAIL] No valid scenarios (need description + expected_direction)")
+        return None
+    print(f"  valid scenarios: {len(scenarios)}")
+
+    # 2. 逐场景评估
+    scenario_results = []
+    total_start = time.time()
+
+    for i, sc in enumerate(scenarios, 1):
+        name = sc.get("name") or sc["id"]
+        diff = sc.get("difficulty", "?")
+        print(f"\n{'─' * 40}")
+        print(f"[{i}/{len(scenarios)}] {name} (difficulty={diff})")
+
+        # 2a. RAG
+        t0 = time.time()
+        rag = score_rag(sc)
+        print(f"  [RAG] recall@1={rag['recall_1']} recall@3={rag['recall_3']} "
+              f"retrieved={rag['retrieved']} ({time.time()-t0:.1f}s)")
+
+        # 2b. Graph
+        t0 = time.time()
+        try:
+            result = _run_scenario(sc)
+            graph_ok = True
+        except Exception as e:
+            print(f"  [Graph] FAIL: {e}")
+            result = {"messages": [], "all_claims": [], "info_symmetry": {}, "contradictions": {}}
+            graph_ok = False
+        graph_time = time.time() - t0
+        print(f"  [Graph] {'OK' if graph_ok else 'FAIL'} ({graph_time:.1f}s)")
+
+        # 2c. Structure
+        structural = score_structure(result)
+        print(f"  [Struct] {structural['passed']}/{structural['total']} "
+              f"({'OK' if structural['passed'] == structural['total'] else 'WARN'})")
+
+        # 2d. Coverage (LLM)
+        t0 = time.time()
+        coverage = judge_coverage(sc, result)
+        print(f"  [Coverage] {coverage['score']} ({coverage.get('comment', '?')[:60]}) "
+              f"({time.time()-t0:.1f}s)")
+
+        # 2e. Correctness (LLM)
+        t0 = time.time()
+        correctness = judge_correctness(sc, result)
+        print(f"  [Correctness] {correctness['total']} "
+              f"(dir={correctness['direction']} theory={correctness['theory_usage']} "
+              f"action={correctness['actionable']}) ({time.time()-t0:.1f}s)")
+
+        scenario_results.append({
+            "id": sc["id"],
+            "name": name,
+            "difficulty": diff,
+            "scores": {
+                "rag": rag,
+                "structural": structural,
+                "coverage": coverage,
+                "correctness": correctness,
+            }
+        })
+
+    total_time = time.time() - total_start
+
+    # 3. 汇总报告
+    summary = _summarize(scenario_results)
+
+    print(f"\n{'=' * 60}")
+    print("Eval Report")
+    print(f"{'=' * 60}")
+    print(f"Scenarios: {summary['scenario_count']}")
+    print(f"Total time: {total_time:.0f}s (~{total_time/summary['scenario_count']:.0f}s/scenario)")
+    print()
+    print(f"  RAG recall@1:      {summary['rag_recall_1_avg']:.2f}")
+    print(f"  RAG recall@3:      {summary['rag_recall_3_avg']:.2f}")
+    print(f"  Structural:        {summary['structural_avg']:.2f}")
+    print(f"  Coverage:          {summary['coverage_avg']:.2f}")
+    print(f"  Correctness:       {summary['correctness_avg']:.2f}")
+    print(f"  ─────────────────────────")
+    print(f"  Weighted Total:    {summary['weighted_total']:.2f}")
+
+    # 4. 按难度分组
+    for diff in ["easy", "medium", "hard"]:
+        diff_results = [r for r in scenario_results if r["difficulty"] == diff]
+        if diff_results:
+            diff_avg = sum(
+                r["scores"]["correctness"]["total"] for r in diff_results
+            ) / len(diff_results)
+            print(f"  {diff}: {diff_avg:.2f} (n={len(diff_results)})")
+
+    # 5. 写入 JSON 报告
+    report_path = os.path.join(os.path.dirname(__file__), "eval_report.json")
+    report = {
+        "eval_date": time.strftime("%Y-%m-%d %H:%M"),
+        "summary": summary,
+        "scenarios": scenario_results,
+    }
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    print(f"\n[report] {report_path}")
+
+    return report
+
+
+if __name__ == "__main__":
+    run_eval()
