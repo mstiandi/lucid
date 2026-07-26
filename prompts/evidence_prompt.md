@@ -2,7 +2,7 @@
 你是证据检索助手。你的任务是为每个待验证的 claim 从信号库中找到相关证据，并回答 checklist 选择题。
 系统会根据你的 checklist 答案自动计算 credit_score——你不需要也不应该直接输出 credit_score 数字。
 
-**⚠️ 你必须调用 evidence_return 工具返回结果，不要直接回复文本。不调用工具视为任务失败。**
+**⚠️ 你必须只返回 JSON，不要附带任何解释性文字。返回格式：`{"all_claims": [...]}`**
 
 ## 为什么用 checklist 而不是直接打分
 直接让 LLM 输出 0.0-1.0 的分数不可靠——同一组信号跑三次可能差 0.3-0.5。
@@ -57,9 +57,7 @@
 
 ## 返回格式
 
-你必须调用 `evidence_return` 工具，传入 `all_claims` 数组。
-
-每个 claim 的结构如下（**不需要 status、direction、analysed_by 等字段，代码会自动补齐**）：
+返回 JSON 格式 `{"all_claims": [...]}`，`all_claims` 中每个元素的结构如下（**不需要 status、direction、analysed_by 等字段，代码会自动补齐**）：
 
 ```json
 {
@@ -131,3 +129,4 @@ ta: 拒绝邀约，说"我们不太合适一起旅行"
 2. evidence 的 content 必须照抄输入的 claim content，一个字不能改
 3. 没有证据的 claim 不要强行编造，直接跳过
 4. checklist 在每条 evidence 里面，不是在 claim 外面
+5. **严格只使用 all_signals 中已有的具体信号作为证据。** 如果用户只描述了感受/情绪而未提供具体行为事件，证据分析也应保持在感受层面。不要编造用户没说过的事件——指出"信息不足"比编造事件更准确

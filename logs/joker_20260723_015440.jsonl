@@ -1,0 +1,88 @@
+{"ts": "2026-07-23T01:54:45", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:54:48", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功"}
+{"ts": "2026-07-23T01:54:49", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:54:54", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 3 条替代解释", "data": {"coverage": 1}}
+{"ts": "2026-07-23T01:54:57", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:55:07", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 2779, "retries": 0, "latency": 5.8}}
+{"ts": "2026-07-23T01:55:14", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 2834, "retries": 0, "latency": 6.7}}
+{"ts": "2026-07-23T01:55:19", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 2961, "retries": 0, "latency": 5.7}}
+{"ts": "2026-07-23T01:55:26", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3064, "retries": 0, "latency": 6.2}}
+{"ts": "2026-07-23T01:55:27", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 3}}
+{"ts": "2026-07-23T01:55:28", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:55:31", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:55:40", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 5 条替代解释", "data": {"coverage": 3}}
+{"ts": "2026-07-23T01:55:54", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3792, "retries": 0, "latency": 7.3}}
+{"ts": "2026-07-23T01:55:59", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3727, "retries": 0, "latency": 5.7}}
+{"ts": "2026-07-23T01:56:04", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3758, "retries": 0, "latency": 4.7}}
+{"ts": "2026-07-23T01:56:11", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3995, "retries": 0, "latency": 7.0}}
+{"ts": "2026-07-23T01:56:12", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:56:15", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功"}
+{"ts": "2026-07-23T01:56:17", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:56:20", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:56:28", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 5 条替代解释", "data": {"coverage": 1}}
+{"ts": "2026-07-23T01:56:38", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4055, "retries": 0, "latency": 6.1}}
+{"ts": "2026-07-23T01:56:44", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4040, "retries": 0, "latency": 5.8}}
+{"ts": "2026-07-23T01:56:49", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4127, "retries": 0, "latency": 4.7}}
+{"ts": "2026-07-23T01:56:54", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4162, "retries": 0, "latency": 5.7}}
+{"ts": "2026-07-23T01:56:56", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:56:59", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功"}
+{"ts": "2026-07-23T01:57:00", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:57:06", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:57:14", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 8 条替代解释", "data": {"coverage": 2}}
+{"ts": "2026-07-23T01:57:23", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3542, "retries": 0, "latency": 6.2}}
+{"ts": "2026-07-23T01:57:30", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3683, "retries": 0, "latency": 7.1}}
+{"ts": "2026-07-23T01:57:34", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3485, "retries": 0, "latency": 3.9}}
+{"ts": "2026-07-23T01:57:39", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3573, "retries": 0, "latency": 4.9}}
+{"ts": "2026-07-23T01:57:40", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 3}}
+{"ts": "2026-07-23T01:57:41", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:57:49", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 6 条替代解释", "data": {"coverage": 3}}
+{"ts": "2026-07-23T01:57:50", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:58:02", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3282, "retries": 0, "latency": 7.1}}
+{"ts": "2026-07-23T01:58:11", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3470, "retries": 0, "latency": 8.6}}
+{"ts": "2026-07-23T01:58:15", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3295, "retries": 0, "latency": 3.9}}
+{"ts": "2026-07-23T01:58:22", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3513, "retries": 0, "latency": 7.2}}
+{"ts": "2026-07-23T01:58:24", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:58:25", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T01:58:28", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:58:36", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 4 条替代解释", "data": {"coverage": 2}}
+{"ts": "2026-07-23T01:58:50", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4510, "retries": 0, "latency": 7.7}}
+{"ts": "2026-07-23T01:58:58", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4598, "retries": 0, "latency": 8.1}}
+{"ts": "2026-07-23T01:59:10", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4887, "retries": 0, "latency": 11.7}}
+{"ts": "2026-07-23T01:59:16", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4577, "retries": 0, "latency": 6.0}}
+{"ts": "2026-07-23T01:59:17", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:59:20", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功"}
+{"ts": "2026-07-23T01:59:21", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:59:30", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T01:59:33", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 7 条替代解释", "data": {"coverage": 2}}
+{"ts": "2026-07-23T01:59:47", "level": "WARN", "node": "COVERAGE_JUDGE", "msg": "tool_calls 为空，重试中", "data": {"attempt": "1/2"}}
+{"ts": "2026-07-23T01:59:57", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4282, "retries": 1, "latency": 18.5}}
+{"ts": "2026-07-23T02:00:07", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4256, "retries": 0, "latency": 9.5}}
+{"ts": "2026-07-23T02:00:11", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3847, "retries": 0, "latency": 4.8}}
+{"ts": "2026-07-23T02:00:18", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3965, "retries": 0, "latency": 6.3}}
+{"ts": "2026-07-23T02:00:19", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T02:00:23", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功"}
+{"ts": "2026-07-23T02:00:24", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T02:00:30", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 1}}
+{"ts": "2026-07-23T02:00:34", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 5 条替代解释", "data": {"coverage": 1}}
+{"ts": "2026-07-23T02:00:46", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3460, "retries": 0, "latency": 8.1}}
+{"ts": "2026-07-23T02:00:53", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3428, "retries": 0, "latency": 7.1}}
+{"ts": "2026-07-23T02:00:56", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3184, "retries": 0, "latency": 2.5}}
+{"ts": "2026-07-23T02:00:58", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 3185, "retries": 0, "latency": 2.6}}
+{"ts": "2026-07-23T02:01:01", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 5}}
+{"ts": "2026-07-23T02:01:05", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功"}
+{"ts": "2026-07-23T02:01:06", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 2}}
+{"ts": "2026-07-23T02:01:20", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 5}}
+{"ts": "2026-07-23T02:01:26", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 12 条替代解释", "data": {"coverage": 5}}
+{"ts": "2026-07-23T02:01:39", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 5117, "retries": 0, "latency": 6.8}}
+{"ts": "2026-07-23T02:01:46", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 5059, "retries": 0, "latency": 7.4}}
+{"ts": "2026-07-23T02:01:54", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 5290, "retries": 0, "latency": 8.4}}
+{"ts": "2026-07-23T02:01:58", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4886, "retries": 0, "latency": 4.0}}
+{"ts": "2026-07-23T02:02:00", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"claims": 4}}
+{"ts": "2026-07-23T02:02:05", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功"}
+{"ts": "2026-07-23T02:02:07", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"claims": 3}}
+{"ts": "2026-07-23T02:02:20", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"claims": 4}}
+{"ts": "2026-07-23T02:02:21", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 6 条替代解释", "data": {"coverage": 4}}
+{"ts": "2026-07-23T02:02:37", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4849, "retries": 0, "latency": 11.5}}
+{"ts": "2026-07-23T02:02:49", "level": "INFO", "node": "COVERAGE_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4922, "retries": 0, "latency": 11.1}}
+{"ts": "2026-07-23T02:02:58", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4924, "retries": 0, "latency": 9.1}}
+{"ts": "2026-07-23T02:03:05", "level": "INFO", "node": "CORRECTNESS_JUDGE", "msg": "LLM 调用成功", "data": {"tokens": 4711, "retries": 0, "latency": 7.0}}

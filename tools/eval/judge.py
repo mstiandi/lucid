@@ -5,7 +5,8 @@ LLM-as-Judge：用 chat_llm 独立评估 joker 的分析质量。
 设计原则：
 - 多选题 → 代码查表算分（与 joker v1 checklist 模式一致）
 - 对抗性 prompt——裁判默认姿态是"找问题"，不是"确认正确"
-- 用 chat 模型（deepseek-chat），与 graph 的 reasoner 隔开，避免自己判自己
+- 用 chat 模型（deepseek-chat, T=0），与 graph 模型隔开
+- 双跑取均值——降低单次评分的偶然性
 """
 
 import json
@@ -23,7 +24,6 @@ def _format_output(result: dict) -> str:
     """把 graph 输出格式化为裁判可读的文本块。"""
     parts = []
 
-    # claims + evidence + alternatives
     claims = result.get("all_claims", [])
     for i, c in enumerate(claims, 1):
         content = c.get("content", "?")
@@ -44,7 +44,6 @@ def _format_output(result: dict) -> str:
                 if isinstance(alt, dict):
                     parts.append(f"- {sig_key}: {alt.get('alternative', '?')} (你认为: {alt.get('youthink', '?')})")
 
-    # contradictions
     contradictions = result.get("contradictions", {})
     if contradictions:
         parts.append("## 矛盾记录")
@@ -54,7 +53,6 @@ def _format_output(result: dict) -> str:
                     if isinstance(item, dict):
                         parts.append(f"- {claim_content}: {item.get('reason', '?')}")
 
-    # info symmetry
     info_sym = result.get("info_symmetry", {})
     if info_sym:
         parts.append("## 信息对称性")
@@ -62,7 +60,6 @@ def _format_output(result: dict) -> str:
             if isinstance(val, dict):
                 parts.append(f"- {key}: user_knew={val.get('user_knew')}, ta_knew={val.get('ta_knew')}, sufficient={val.get('is_sufficient')}")
 
-    # final message
     messages = result.get("messages", [])
     if messages:
         last = messages[-1]
@@ -93,18 +90,26 @@ def coverage_return(
     }
 
 
+def _run_single_coverage(prompt: str) -> dict | None:
+    """单次覆盖度评分调用。失败返回 None。"""
+    response = safe_llm_call(
+        llm, [coverage_return],
+        [SystemMessage(content=prompt)],
+        node_name="COVERAGE_JUDGE"
+    )
+    if response is None:
+        return None
+    args = response.tool_calls[0]["args"]
+    return {
+        "covered_count": args.get("covered_count", 0),
+        "missed_count": args.get("missed_count", 0),
+        "comment": args.get("comment", ""),
+    }
+
+
 def judge_coverage(scenario: dict, result: dict) -> dict:
     """
-    LLM 判定：期望覆盖的关键方向是否在分析中出现。
-
-    Returns:
-        {
-            "covered_count": 2,
-            "missed_count": 1,
-            "comment": "...",
-            "score": 0.67,   # covered / (covered + missed)
-            "raw_response": {...}
-        }
+    LLM 判定：期望覆盖的关键方向是否在分析中出现。双跑取均值。
     """
     description = scenario.get("description", "")
     expected = scenario.get("ground_truth", {}).get("expected_direction", "")
@@ -135,29 +140,26 @@ def judge_coverage(scenario: dict, result: dict) -> dict:
 
 请统计 covered（完全或充分覆盖）和 missed（缺失或擦边）的关键点数，并给出一个简短评论。"""
 
-    response = safe_llm_call(
-        llm, [coverage_return],
-        [SystemMessage(content=prompt)],
-        node_name="COVERAGE_JUDGE"
-    )
+    # 双跑取均值
+    runs = [_run_single_coverage(prompt) for _ in range(2)]
+    runs = [r for r in runs if r is not None]
 
-    if response is None:
+    if not runs:
         return {
-            "covered_count": 0, "missed_count": 0, "comment": "LLM 调用失败",
+            "covered_count": 0, "missed_count": 0, "comment": "LLM 调用失败（双跑均失败）",
             "score": None, "raw_response": {}
         }
 
-    args = response.tool_calls[0]["args"]
-    covered = args.get("covered_count", 0)
-    missed = args.get("missed_count", 0)
+    covered = round(sum(r["covered_count"] for r in runs) / len(runs))
+    missed = round(sum(r["missed_count"] for r in runs) / len(runs))
     total = covered + missed
 
     return {
         "covered_count": covered,
         "missed_count": missed,
-        "comment": args.get("comment", ""),
+        "comment": runs[0]["comment"],  # 取第一跑的评语
         "score": round(covered / total, 2) if total > 0 else 0,
-        "raw_response": args,
+        "raw_response": runs[0],
     }
 
 
@@ -192,17 +194,35 @@ _THEORY_MAP    = {"A": 1.0, "B": 0.5, "C": 0.2, "D": 0.0}
 _ACTION_MAP    = {"A": 1.0, "B": 0.5, "C": 0.0}
 
 
+def _run_single_correctness(prompt: str) -> dict | None:
+    """单次正确性评分调用。失败返回 None。"""
+    response = safe_llm_call(
+        llm, [correctness_return],
+        [SystemMessage(content=prompt)],
+        node_name="CORRECTNESS_JUDGE"
+    )
+    if response is None:
+        return None
+    args = response.tool_calls[0]["args"]
+    d = args.get("direction", "B").upper()[0]
+    t = args.get("theory_usage", "B").upper()[0]
+    a = args.get("actionable", "B").upper()[0]
+    return {
+        "direction": d,
+        "theory_usage": t,
+        "actionable": a,
+        "comment": args.get("comment", ""),
+        "scores": {
+            "direction": _DIRECTION_MAP.get(d, 0.5),
+            "theory": _THEORY_MAP.get(t, 0.3),
+            "actionable": _ACTION_MAP.get(a, 0.3),
+        },
+    }
+
+
 def judge_correctness(scenario: dict, result: dict) -> dict:
     """
-    LLM 判定：分析的质量。三道单选题 → 查表算分。
-
-    Returns:
-        {
-            "direction": "A", "theory_usage": "B", "actionable": "B",
-            "comment": "...",
-            "scores": {"direction": 1.0, "theory": 0.5, "actionable": 0.5},
-            "total": 0.67
-        }
+    LLM 判定：分析的质量。三道单选题 → 查表算分。双跑取均值。
     """
     description = scenario.get("description", "")
     expected = scenario.get("ground_truth", {}).get("expected_direction", "")
@@ -238,39 +258,33 @@ def judge_correctness(scenario: dict, result: dict) -> dict:
    B) 一般——给了方向但不具体（如"你要多沟通"但没有说怎么做）
    C) 无——分析停留在抽象描述层面，用户读完不知道怎么办"""
 
-    response = safe_llm_call(
-        llm, [correctness_return],
-        [SystemMessage(content=prompt)],
-        node_name="CORRECTNESS_JUDGE"
-    )
+    # 双跑取均值
+    runs = [_run_single_correctness(prompt) for _ in range(2)]
+    runs = [r for r in runs if r is not None]
 
-    if response is None:
+    if not runs:
         return {
             "direction": "?", "theory_usage": "?", "actionable": "?",
-            "comment": "LLM 调用失败",
+            "comment": "LLM 调用失败（双跑均失败）",
             "scores": {"direction": 0, "theory": 0, "actionable": 0},
             "total": 0,
             "raw_response": {},
         }
 
-    args = response.tool_calls[0]["args"]
-    d = args.get("direction", "B").upper()[0]
-    t = args.get("theory_usage", "B").upper()[0]
-    a = args.get("actionable", "B").upper()[0]
-
-    scores = {
-        "direction": _DIRECTION_MAP.get(d, 0.5),
-        "theory": _THEORY_MAP.get(t, 0.3),
-        "actionable": _ACTION_MAP.get(a, 0.3),
+    # 平均分数
+    avg_scores = {
+        "direction": round(sum(r["scores"]["direction"] for r in runs) / len(runs), 2),
+        "theory": round(sum(r["scores"]["theory"] for r in runs) / len(runs), 2),
+        "actionable": round(sum(r["scores"]["actionable"] for r in runs) / len(runs), 2),
     }
-    total = round(sum(scores.values()) / 3, 2)
+    total = round(sum(avg_scores.values()) / 3, 2)
 
     return {
-        "direction": d,
-        "theory_usage": t,
-        "actionable": a,
-        "comment": args.get("comment", ""),
-        "scores": scores,
+        "direction": runs[0]["direction"],
+        "theory_usage": runs[0]["theory_usage"],
+        "actionable": runs[0]["actionable"],
+        "comment": runs[0]["comment"],
+        "scores": avg_scores,
         "total": total,
-        "raw_response": args,
+        "raw_response": runs[0],
     }

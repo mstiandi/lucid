@@ -43,10 +43,32 @@ class TheoryStore:
 
     @property
     def model(self) -> SentenceTransformer:
-        """懒加载 embedding 模型。"""
+        """懒加载 embedding 模型。优先本地缓存，未缓存则自动下载。"""
         if self._model is None:
-            self._model = SentenceTransformer(self._model_name)
+            model_path = self._resolve_model_path()
+            self._model = SentenceTransformer(model_path)
         return self._model
+
+    def _resolve_model_path(self) -> str:
+        """定位模型路径：本地缓存 → 自动下载 → 返回绝对路径。"""
+        from pathlib import Path
+        hub_cache = Path(
+            os.environ.get("HF_HOME",
+                           os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "hub"))
+        )
+        model_dir = hub_cache / "models--BAAI--bge-base-zh-v1.5"
+        snapshots_dir = model_dir / "snapshots"
+
+        # 尝试从本地缓存加载
+        if snapshots_dir.exists():
+            snapshots = sorted(snapshots_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+            for snap in snapshots:
+                if (snap / "config.json").exists():
+                    return str(snap)
+
+        # 本地无缓存 → 下载
+        from huggingface_hub import snapshot_download
+        return snapshot_download(self._model_name)
 
     # ─── 索引 ──────────────────────────────────────────
 

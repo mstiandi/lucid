@@ -1,12 +1,12 @@
 {
-  "eval_date": "2026-07-21 11:29",
+  "eval_date": "2026-07-23 02:16",
   "summary": {
-    "rag_recall_1_avg": 0.3,
+    "rag_recall_1_avg": 0.6,
     "rag_recall_3_avg": 0.93,
-    "structural_avg": 0.88,
-    "coverage_avg": 0.49,
-    "correctness_avg": 0.72,
-    "weighted_total": 0.75,
+    "structural_avg": 0.92,
+    "coverage_avg": 0.57,
+    "correctness_avg": 0.93,
+    "weighted_total": 0.84,
     "scenario_count": 10
   },
   "scenarios": [
@@ -19,79 +19,15 @@
           "retrieved": [
             "基本归因错误",
             "情绪推理",
-            "认知失调"
-          ],
-          "relevant": [
-            "基本归因错误"
-          ],
-          "recall_1": 1,
-          "recall_3": 1.0,
-          "hits": [
-            "基本归因错误"
-          ],
-          "misses": []
-        },
-        "structural": {
-          "checks": {
-            "graph_completed": true,
-            "all_claims_have_evidence": false,
-            "all_claims_have_alternatives": true,
-            "info_symmetry_produced": true,
-            "contradictions_produced": true
-          },
-          "passed": 4,
-          "total": 5,
-          "score": 0.8
-        },
-        "coverage": {
-          "covered_count": 2,
-          "missed_count": 0,
-          "comment": "分析完全覆盖了期望方向：不仅明确指出了基本归因错误并反复强调情境因素，其核心论述逻辑也成功实现了引导用户区分行为与意图的目标。虽未使用完全相同措辞，但实质内涵已充分覆盖。",
-          "score": 1.0,
-          "raw_response": {
-            "covered_count": 2,
-            "missed_count": 0,
-            "comment": "分析完全覆盖了期望方向：不仅明确指出了基本归因错误并反复强调情境因素，其核心论述逻辑也成功实现了引导用户区分行为与意图的目标。虽未使用完全相同措辞，但实质内涵已充分覆盖。"
-          }
-        },
-        "correctness": {
-          "direction": "A",
-          "theory_usage": "A",
-          "actionable": "A",
-          "comment": "分析准确识别了基本归因错误这一核心认知偏差，逐信号深入拆解替代解释并引入互惠规范和认知失调理论加以佐证，最终给出了清晰、可操作的沟通建议，整体质量优秀。",
-          "scores": {
-            "direction": 1.0,
-            "theory": 1.0,
-            "actionable": 1.0
-          },
-          "total": 1.0,
-          "raw_response": {
-            "direction": "A",
-            "theory_usage": "A",
-            "actionable": "A",
-            "comment": "分析准确识别了基本归因错误这一核心认知偏差，逐信号深入拆解替代解释并引入互惠规范和认知失调理论加以佐证，最终给出了清晰、可操作的沟通建议，整体质量优秀。"
-          }
-        }
-      }
-    },
-    {
-      "id": "s02",
-      "name": "付出没有回报",
-      "difficulty": "easy",
-      "scores": {
-        "rag": {
-          "retrieved": [
-            "互惠规范",
-            "认知失调",
             "投射效应"
           ],
           "relevant": [
-            "互惠规范"
+            "基本归因错误"
           ],
           "recall_1": 1,
           "recall_3": 1.0,
           "hits": [
-            "互惠规范"
+            "基本归因错误"
           ],
           "misses": []
         },
@@ -108,32 +44,106 @@
           "score": 1.0
         },
         "coverage": {
-          "covered_count": 5,
-          "missed_count": 0,
-          "comment": "全部5个期望关键点均被充分覆盖，无缺失。分析精准捕捉了互惠规范隐性记账、付出形式不被对方解读为'好'、表达关心方式差异、以及'回报方式不被理解/认可'这一核心洞察。",
-          "score": 1.0,
+          "covered_count": 2,
+          "missed_count": 1,
+          "comment": "基本归因错误和情境因素都覆盖充分，但\"区分行为与意图\"这个建议方向只擦边未明确展开——最终建议更多是区分感受与意图，而非行为与意图。",
+          "score": 0.67,
           "raw_response": {
-            "covered_count": 5,
-            "missed_count": 0,
-            "comment": "全部5个期望关键点均被充分覆盖，无缺失。分析精准捕捉了互惠规范隐性记账、付出形式不被对方解读为'好'、表达关心方式差异、以及'回报方式不被理解/认可'这一核心洞察。"
+            "covered_count": 2,
+            "missed_count": 1,
+            "comment": "基本归因错误和情境因素都覆盖充分，但\"区分行为与意图\"这个建议方向只擦边未明确展开——最终建议更多是区分感受与意图，而非行为与意图。"
           }
         },
         "correctness": {
-          "direction": "B",
-          "theory_usage": "B",
-          "actionable": "B",
-          "comment": "方向正确——准确指出了互惠规范的隐性记账和认知失调，但过度使用理论标签稀释了核心洞察；理论使用相关但部分场景存在生硬套用（如认知失调、自我实现预言多次出现但深度不足）；可操作性一般——最终回复给了回顾对方积极信号的方向，但整体洞察偏重认知重构而非具体行动建议。",
+          "direction": "A",
+          "theory_usage": "A",
+          "actionable": "A",
+          "comment": "准确识别基本归因错误和情绪推理双重偏差，理论运用扎实且结合场景展开，行动建议具体可执行，分析质量高。",
           "scores": {
-            "direction": 0.6,
-            "theory": 0.5,
-            "actionable": 0.5
+            "direction": 1.0,
+            "theory": 1.0,
+            "actionable": 1.0
           },
-          "total": 0.53,
+          "total": 1.0,
           "raw_response": {
-            "direction": "B",
-            "theory_usage": "B",
-            "actionable": "B",
-            "comment": "方向正确——准确指出了互惠规范的隐性记账和认知失调，但过度使用理论标签稀释了核心洞察；理论使用相关但部分场景存在生硬套用（如认知失调、自我实现预言多次出现但深度不足）；可操作性一般——最终回复给了回顾对方积极信号的方向，但整体洞察偏重认知重构而非具体行动建议。"
+            "direction": "A",
+            "theory_usage": "A",
+            "actionable": "A",
+            "comment": "准确识别基本归因错误和情绪推理双重偏差，理论运用扎实且结合场景展开，行动建议具体可执行，分析质量高。",
+            "scores": {
+              "direction": 1.0,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "s02",
+      "name": "付出没有回报",
+      "difficulty": "easy",
+      "scores": {
+        "rag": {
+          "retrieved": [
+            "互惠规范",
+            "情绪推理",
+            "投射效应"
+          ],
+          "relevant": [
+            "互惠规范"
+          ],
+          "recall_1": 1,
+          "recall_3": 1.0,
+          "hits": [
+            "互惠规范"
+          ],
+          "misses": []
+        },
+        "structural": {
+          "checks": {
+            "graph_completed": true,
+            "all_claims_have_evidence": true,
+            "all_claims_have_alternatives": false,
+            "info_symmetry_produced": true,
+            "contradictions_produced": true
+          },
+          "passed": 4,
+          "total": 5,
+          "score": 0.8
+        },
+        "coverage": {
+          "covered_count": 2,
+          "missed_count": 4,
+          "comment": "最大缺口：完全没有讨论\"互惠规范的隐性记账\"这个核心认知偏差——用户认为\"我对ta好→ta该回报\"是一种隐性的情感记账，而joker只讨论了投射效应和表达方式差异，忽略了用户将日常关心视为\"投资\"并期待等价回报的互惠心理机制。",
+          "score": 0.33,
+          "raw_response": {
+            "covered_count": 2,
+            "missed_count": 3,
+            "comment": "最大缺口：完全没有讨论\"互惠规范的隐性记账\"这个核心认知偏差——用户认为\"我对ta好→ta该回报\"是一种隐性的情感记账，而joker只讨论了投射效应和表达方式差异，忽略了用户将日常关心视为\"投资\"并期待等价回报的互惠心理机制。"
+          }
+        },
+        "correctness": {
+          "direction": "A",
+          "theory_usage": "A",
+          "actionable": "A",
+          "comment": "分析精准识别了情绪推理和投射效应两个核心认知偏差，理论运用深入且贴合场景，最终给出了可执行的3周观察方案，质量优秀。",
+          "scores": {
+            "direction": 1.0,
+            "theory": 1.0,
+            "actionable": 1.0
+          },
+          "total": 1.0,
+          "raw_response": {
+            "direction": "A",
+            "theory_usage": "A",
+            "actionable": "A",
+            "comment": "分析精准识别了情绪推理和投射效应两个核心认知偏差，理论运用深入且贴合场景，最终给出了可执行的3周观察方案，质量优秀。",
+            "scores": {
+              "direction": 1.0,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
           }
         }
       }
@@ -172,21 +182,21 @@
           "score": 1.0
         },
         "coverage": {
-          "covered_count": 1,
+          "covered_count": 2,
           "missed_count": 2,
-          "comment": "期望要求明确指出'笑→喜欢'是投射效应，但joker对这个核心信号用的是基本归因错误而非投射效应（投射效应被用在了其他证据上）；同时，分析没有明确区分'友好'和'恋爱好感'这两个不同层次的关系信号，这是认知重构的关键一步。",
-          "score": 0.33,
+          "comment": "投射效应和替代解释（礼貌/便利）覆盖充分，但缺少一个明确的建议性框架来区分\"友好\"和\"恋爱好感\"，也没有明确指出\"一个微笑不足以区分两者\"这一关键结论。",
+          "score": 0.5,
           "raw_response": {
-            "covered_count": 1,
+            "covered_count": 2,
             "missed_count": 2,
-            "comment": "期望要求明确指出'笑→喜欢'是投射效应，但joker对这个核心信号用的是基本归因错误而非投射效应（投射效应被用在了其他证据上）；同时，分析没有明确区分'友好'和'恋爱好感'这两个不同层次的关系信号，这是认知重构的关键一步。"
+            "comment": "投射效应和替代解释（礼貌/便利）覆盖充分，但缺少一个明确的建议性框架来区分\"友好\"和\"恋爱好感\"，也没有明确指出\"一个微笑不足以区分两者\"这一关键结论。"
           }
         },
         "correctness": {
           "direction": "A",
           "theory_usage": "A",
           "actionable": "A",
-          "comment": "分析方向准确，理论运用恰当且深入，给出了可操作的下一步建议，质量优秀。",
+          "comment": "准确识别了投射效应和基本归因错误的核心认知偏差，理论运用恰当且深入，给出了具体可执行的信号清零测试，分析质量高。",
           "scores": {
             "direction": 1.0,
             "theory": 1.0,
@@ -197,7 +207,12 @@
             "direction": "A",
             "theory_usage": "A",
             "actionable": "A",
-            "comment": "分析方向准确，理论运用恰当且深入，给出了可操作的下一步建议，质量优秀。"
+            "comment": "准确识别了投射效应和基本归因错误的核心认知偏差，理论运用恰当且深入，给出了具体可执行的信号清零测试，分析质量高。",
+            "scores": {
+              "direction": 1.0,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
           }
         }
       }
@@ -209,14 +224,14 @@
       "scores": {
         "rag": {
           "retrieved": [
-            "认知失调",
             "情绪推理",
-            "基本归因错误"
+            "基本归因错误",
+            "认知失调"
           ],
           "relevant": [
             "情绪推理"
           ],
-          "recall_1": 0,
+          "recall_1": 1,
           "recall_3": 1.0,
           "hits": [
             "情绪推理"
@@ -226,42 +241,47 @@
         "structural": {
           "checks": {
             "graph_completed": true,
-            "all_claims_have_evidence": false,
+            "all_claims_have_evidence": true,
             "all_claims_have_alternatives": true,
             "info_symmetry_produced": true,
             "contradictions_produced": true
           },
-          "passed": 4,
+          "passed": 5,
           "total": 5,
-          "score": 0.8
+          "score": 1.0
         },
         "coverage": {
           "covered_count": 2,
-          "missed_count": 1,
-          "comment": "缺失了关键的行动建议方向：期望分析明确要求给出具体的直接确认方式（如问一句'你今天是不是心情不太好'），但joker只模糊说了'可以询问'，没有点出'在把感觉当事实之前先确认'这个核心行动逻辑。",
-          "score": 0.67,
+          "missed_count": 0,
+          "comment": "三个关键方向全部覆盖，且每个点都有充分展开讨论。joker 的分析非常全面，情绪推理、替代解释、行动建议三个维度都处理到位。",
+          "score": 1.0,
           "raw_response": {
-            "covered_count": 2,
-            "missed_count": 1,
-            "comment": "缺失了关键的行动建议方向：期望分析明确要求给出具体的直接确认方式（如问一句'你今天是不是心情不太好'），但joker只模糊说了'可以询问'，没有点出'在把感觉当事实之前先确认'这个核心行动逻辑。"
+            "covered_count": 3,
+            "missed_count": 0,
+            "comment": "三个关键方向全部覆盖，且每个点都有充分展开讨论。joker 的分析非常全面，情绪推理、替代解释、行动建议三个维度都处理到位。"
           }
         },
         "correctness": {
           "direction": "A",
           "theory_usage": "A",
-          "actionable": "B",
-          "comment": "核心方向准确，精准识别了情绪推理和基本归因错误；理论运用恰当且具体；可操作性上给了方向但建议的具体程度可进一步提升。",
+          "actionable": "A",
+          "comment": "分析准确识别了情绪推理这一核心认知偏差，理论运用扎实且结合场景展开，行动建议具体可执行，整体质量高。",
           "scores": {
             "direction": 1.0,
             "theory": 1.0,
-            "actionable": 0.5
+            "actionable": 1.0
           },
-          "total": 0.83,
+          "total": 1.0,
           "raw_response": {
             "direction": "A",
             "theory_usage": "A",
-            "actionable": "B",
-            "comment": "核心方向准确，精准识别了情绪推理和基本归因错误；理论运用恰当且具体；可操作性上给了方向但建议的具体程度可进一步提升。"
+            "actionable": "A",
+            "comment": "分析准确识别了情绪推理这一核心认知偏差，理论运用扎实且结合场景展开，行动建议具体可执行，整体质量高。",
+            "scores": {
+              "direction": 1.0,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
           }
         }
       }
@@ -274,8 +294,8 @@
         "rag": {
           "retrieved": [
             "认知失调",
-            "自我实现预言",
-            "依恋理论-回避型"
+            "情绪推理",
+            "自我实现预言"
           ],
           "relevant": [
             "认知失调"
@@ -300,32 +320,37 @@
           "score": 1.0
         },
         "coverage": {
-          "covered_count": 2,
-          "missed_count": 1,
-          "comment": "joker 充分覆盖了认知失调和沉没成本谬误，但遗漏了最关键的反事实思维提问——'如果今天才认识ta，你还会开始吗？'，导致分析缺乏帮助用户跳出'过去付出'陷阱的破局点。",
-          "score": 0.67,
+          "covered_count": 3,
+          "missed_count": 2,
+          "comment": "最明显的缺口：joker 没有明确将\"性格不合\"与\"投入很多\"之间的认知冲突作为核心框架来讨论，也没有指出用户是在改变\"性格不合\"这个认知来合理化坚持——而这恰恰是用户困境的心理机制核心。",
+          "score": 0.6,
           "raw_response": {
-            "covered_count": 2,
-            "missed_count": 1,
-            "comment": "joker 充分覆盖了认知失调和沉没成本谬误，但遗漏了最关键的反事实思维提问——'如果今天才认识ta，你还会开始吗？'，导致分析缺乏帮助用户跳出'过去付出'陷阱的破局点。"
+            "covered_count": 3,
+            "missed_count": 2,
+            "comment": "最明显的缺口：joker 没有明确将\"性格不合\"与\"投入很多\"之间的认知冲突作为核心框架来讨论，也没有指出用户是在改变\"性格不合\"这个认知来合理化坚持——而这恰恰是用户困境的心理机制核心。"
           }
         },
         "correctness": {
-          "direction": "A",
+          "direction": "B",
           "theory_usage": "A",
           "actionable": "A",
-          "comment": "分析准确识别了认知失调和沉没成本谬误，理论运用恰当且场景化，最终给出了具体可操作的建议，质量优秀。",
+          "comment": "方向大致正确，但Claim 1过度纠结于'性格不合是否成立'而非聚焦认知失调的冲突机制，略有偏离；理论运用准确且深入；最终回复的行动建议具体可操作。",
           "scores": {
-            "direction": 1.0,
+            "direction": 0.8,
             "theory": 1.0,
             "actionable": 1.0
           },
-          "total": 1.0,
+          "total": 0.93,
           "raw_response": {
-            "direction": "A",
+            "direction": "B",
             "theory_usage": "A",
             "actionable": "A",
-            "comment": "分析准确识别了认知失调和沉没成本谬误，理论运用恰当且场景化，最终给出了具体可操作的建议，质量优秀。"
+            "comment": "方向大致正确，但Claim 1过度纠结于'性格不合是否成立'而非聚焦认知失调的冲突机制，略有偏离；理论运用准确且深入；最终回复的行动建议具体可操作。",
+            "scores": {
+              "direction": 0.6,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
           }
         }
       }
@@ -337,9 +362,9 @@
       "scores": {
         "rag": {
           "retrieved": [
-            "认知失调",
             "情绪推理",
-            "可得性启发"
+            "可得性启发",
+            "认知失调"
           ],
           "relevant": [
             "可得性启发"
@@ -355,41 +380,46 @@
           "checks": {
             "graph_completed": true,
             "all_claims_have_evidence": true,
-            "all_claims_have_alternatives": true,
+            "all_claims_have_alternatives": false,
             "info_symmetry_produced": true,
             "contradictions_produced": true
           },
-          "passed": 5,
+          "passed": 4,
           "total": 5,
-          "score": 1.0
+          "score": 0.8
         },
         "coverage": {
-          "covered_count": 4,
-          "missed_count": 3,
-          "comment": "两个明显缺失：一是未建议对现任进行独立的可信度评估（不依赖前任经验），二是未给出\"现任不是前任/自我实现预言\"的明确警示。对\"客观对比现任与前任行为\"也只是擦边替代解释，未做结构化对比。",
-          "score": 0.57,
+          "covered_count": 2,
+          "missed_count": 4,
+          "comment": "最明显的缺口：joker完全没有做\"前任行为vs现任行为\"的客观对比分析，也没有指出\"用同样的预设对待不同的人会形成自我实现预言\"这一关键提醒。分析停留在提供替代解释层面，但缺少对创伤记忆激活机制和认知偏差的命名与结构化拆解。",
+          "score": 0.33,
           "raw_response": {
-            "covered_count": 4,
-            "missed_count": 3,
-            "comment": "两个明显缺失：一是未建议对现任进行独立的可信度评估（不依赖前任经验），二是未给出\"现任不是前任/自我实现预言\"的明确警示。对\"客观对比现任与前任行为\"也只是擦边替代解释，未做结构化对比。"
+            "covered_count": 1,
+            "missed_count": 4,
+            "comment": "最明显的缺口：joker完全没有做\"前任行为vs现任行为\"的客观对比分析，也没有指出\"用同样的预设对待不同的人会形成自我实现预言\"这一关键提醒。分析停留在提供替代解释层面，但缺少对创伤记忆激活机制和认知偏差的命名与结构化拆解。"
           }
         },
         "correctness": {
-          "direction": "B",
-          "theory_usage": "B",
+          "direction": "A",
+          "theory_usage": "A",
           "actionable": "B",
-          "comment": "分析覆盖面广、理论运用到位，但对用户的困境定位有偏差——把创伤后信任重建问题部分稀释成了单纯认知偏差，且第二个claim内部存在矛盾，最终建议方向不够精准。",
+          "comment": "核心方向正确，准确识别了创伤投射和情绪推理偏差；理论运用恰当（情绪推理、基本归因错误、认知失调）；可操作性方面最终给出了具体建议但中间分析偏解释性。扣分点：将用户陈述的前任事实当作需要验证的claim来处理不太合理。",
           "scores": {
-            "direction": 0.6,
-            "theory": 0.5,
-            "actionable": 0.5
+            "direction": 1.0,
+            "theory": 1.0,
+            "actionable": 0.75
           },
-          "total": 0.53,
+          "total": 0.92,
           "raw_response": {
-            "direction": "B",
-            "theory_usage": "B",
+            "direction": "A",
+            "theory_usage": "A",
             "actionable": "B",
-            "comment": "分析覆盖面广、理论运用到位，但对用户的困境定位有偏差——把创伤后信任重建问题部分稀释成了单纯认知偏差，且第二个claim内部存在矛盾，最终建议方向不够精准。"
+            "comment": "核心方向正确，准确识别了创伤投射和情绪推理偏差；理论运用恰当（情绪推理、基本归因错误、认知失调）；可操作性方面最终给出了具体建议但中间分析偏解释性。扣分点：将用户陈述的前任事实当作需要验证的claim来处理不太合理。",
+            "scores": {
+              "direction": 1.0,
+              "theory": 1.0,
+              "actionable": 0.5
+            }
           }
         }
       }
@@ -401,9 +431,9 @@
       "scores": {
         "rag": {
           "retrieved": [
-            "认知失调",
             "情绪推理",
-            "依恋理论-焦虑型"
+            "依恋理论-焦虑型",
+            "认知失调"
           ],
           "relevant": [
             "依恋理论-焦虑型"
@@ -430,30 +460,35 @@
         "coverage": {
           "covered_count": 0,
           "missed_count": 6,
-          "comment": "期望方向的所有6个关键点全部缺失：未识别焦虑型依恋、未指出抗议行为、未分析恶性循环、未给出任何一条建议。joker的分析停留在认知失调/情绪推理的通用解释上，完全偏离了依恋理论视角和可操作建议的核心方向。",
+          "comment": "最大的缺口：joker 完全没识别出\"焦虑型依恋\"这个核心框架，也没有将打五个电话定义为\"抗议行为\"，更没有给出任何针对焦虑发作的即时应对建议（如延迟反应）。整个分析停留在认知偏差层面，缺少依恋理论视角和可操作的行为干预。",
           "score": 0.0,
           "raw_response": {
             "covered_count": 0,
             "missed_count": 6,
-            "comment": "期望方向的所有6个关键点全部缺失：未识别焦虑型依恋、未指出抗议行为、未分析恶性循环、未给出任何一条建议。joker的分析停留在认知失调/情绪推理的通用解释上，完全偏离了依恋理论视角和可操作建议的核心方向。"
+            "comment": "最大的缺口：joker 完全没识别出\"焦虑型依恋\"这个核心框架，也没有将打五个电话定义为\"抗议行为\"，更没有给出任何针对焦虑发作的即时应对建议（如延迟反应）。整个分析停留在认知偏差层面，缺少依恋理论视角和可操作的行为干预。"
           }
         },
         "correctness": {
           "direction": "B",
-          "theory_usage": "B",
-          "actionable": "C",
-          "comment": "细致拆解了认知偏差但缺了焦虑型依恋的核心框架，且没有给出任何可操作建议",
+          "theory_usage": "A",
+          "actionable": "A",
+          "comment": "认知偏差分析扎实、理论运用准确、建议具体，但遗漏了焦虑型依恋这一核心框架，未识别'抗议行为'的典型模式",
           "scores": {
             "direction": 0.6,
-            "theory": 0.5,
-            "actionable": 0.0
+            "theory": 0.75,
+            "actionable": 0.75
           },
-          "total": 0.37,
+          "total": 0.7,
           "raw_response": {
             "direction": "B",
-            "theory_usage": "B",
-            "actionable": "C",
-            "comment": "细致拆解了认知偏差但缺了焦虑型依恋的核心框架，且没有给出任何可操作建议"
+            "theory_usage": "A",
+            "actionable": "A",
+            "comment": "认知偏差分析扎实、理论运用准确、建议具体，但遗漏了焦虑型依恋这一核心框架，未识别'抗议行为'的典型模式",
+            "scores": {
+              "direction": 0.6,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
           }
         }
       }
@@ -465,8 +500,8 @@
       "scores": {
         "rag": {
           "retrieved": [
-            "认知失调",
             "情绪推理",
+            "认知失调",
             "依恋理论-回避型"
           ],
           "relevant": [
@@ -482,31 +517,31 @@
         "structural": {
           "checks": {
             "graph_completed": true,
-            "all_claims_have_evidence": false,
+            "all_claims_have_evidence": true,
             "all_claims_have_alternatives": true,
             "info_symmetry_produced": true,
             "contradictions_produced": true
           },
-          "passed": 4,
+          "passed": 5,
           "total": 5,
-          "score": 0.8
+          "score": 1.0
         },
         "coverage": {
-          "covered_count": 0,
-          "missed_count": 5,
-          "comment": "joker的分析完全绕开了回避型依恋这个核心框架，整个分析停留在通用认知偏差（基本归因错误、认知失调、情绪推理）层面，没有识别出对方的行为模式是典型的回避型依恋表现，也没有给出任何针对回避型的沟通建议（如避免压力场景下谈未来、用行动替代对话）。五个期望关键点全部缺失。",
-          "score": 0.0,
+          "covered_count": 3,
+          "missed_count": 2,
+          "comment": "joker充分覆盖了回避型依恋的理论解释和\"不在乎\"的误判，但缺失了两个关键行动建议：①不要在冲突压力时谈未来，②用\"一起做某件事\"替代\"谈一谈\"来建立连接。",
+          "score": 0.6,
           "raw_response": {
-            "covered_count": 0,
-            "missed_count": 5,
-            "comment": "joker的分析完全绕开了回避型依恋这个核心框架，整个分析停留在通用认知偏差（基本归因错误、认知失调、情绪推理）层面，没有识别出对方的行为模式是典型的回避型依恋表现，也没有给出任何针对回避型的沟通建议（如避免压力场景下谈未来、用行动替代对话）。五个期望关键点全部缺失。"
+            "covered_count": 3,
+            "missed_count": 2,
+            "comment": "joker充分覆盖了回避型依恋的理论解释和\"不在乎\"的误判，但缺失了两个关键行动建议：①不要在冲突压力时谈未来，②用\"一起做某件事\"替代\"谈一谈\"来建立连接。"
           }
         },
         "correctness": {
           "direction": "A",
           "theory_usage": "A",
           "actionable": "A",
-          "comment": "分析精准，理论运用自然，替代解释有深度，洞察可操作",
+          "comment": "高质量分析：准确识别了用户将回避行为等同于不在乎的核心认知偏差，运用回避型依恋、情绪推理、基本归因错误等理论进行具体解释，并给出了可操作的行为建议和话术。",
           "scores": {
             "direction": 1.0,
             "theory": 1.0,
@@ -517,7 +552,12 @@
             "direction": "A",
             "theory_usage": "A",
             "actionable": "A",
-            "comment": "分析精准，理论运用自然，替代解释有深度，洞察可操作"
+            "comment": "高质量分析：准确识别了用户将回避行为等同于不在乎的核心认知偏差，运用回避型依恋、情绪推理、基本归因错误等理论进行具体解释，并给出了可操作的行为建议和话术。",
+            "scores": {
+              "direction": 1.0,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
           }
         }
       }
@@ -529,15 +569,15 @@
       "scores": {
         "rag": {
           "retrieved": [
-            "认知失调",
             "自我实现预言",
-            "依恋理论-回避型"
+            "依恋理论-回避型",
+            "依恋理论-焦虑型"
           ],
           "relevant": [
-            "自我实现预言",
-            "依恋理论-回避型"
+            "依恋理论-回避型",
+            "自我实现预言"
           ],
-          "recall_1": 0,
+          "recall_1": 1,
           "recall_3": 1.0,
           "hits": [
             "自我实现预言",
@@ -548,8 +588,8 @@
         "structural": {
           "checks": {
             "graph_completed": true,
-            "all_claims_have_evidence": false,
-            "all_claims_have_alternatives": true,
+            "all_claims_have_evidence": true,
+            "all_claims_have_alternatives": false,
             "info_symmetry_produced": true,
             "contradictions_produced": true
           },
@@ -558,32 +598,37 @@
           "score": 0.8
         },
         "coverage": {
-          "covered_count": 0,
-          "missed_count": 5,
-          "comment": "最明显的缺口：joker完全没有指出\"用户用'预期被抛弃'来合理化自己对亲密的恐惧\"这一核心洞察，也没有给出期望方向中明确要求的两个建议（①意识到自己在推动而非预判结果，②链条可打断）。整个分析停留在信号层面的替代解读，缺少对用户深层心理机制的结构性揭示。",
-          "score": 0.0,
+          "covered_count": 4,
+          "missed_count": 1,
+          "comment": "最明显的缺口：建议②中缺少关键认知矫正——'第一次说'我爱你'不会让ta立刻走，但一直不说可能会'。joker给出了'做小实验'的行动建议，但没有明确点出这个核心的认知反转点，即用户最恐惧的'说了就会失去'其实是不成立的。",
+          "score": 0.8,
           "raw_response": {
-            "covered_count": 0,
-            "missed_count": 5,
-            "comment": "最明显的缺口：joker完全没有指出\"用户用'预期被抛弃'来合理化自己对亲密的恐惧\"这一核心洞察，也没有给出期望方向中明确要求的两个建议（①意识到自己在推动而非预判结果，②链条可打断）。整个分析停留在信号层面的替代解读，缺少对用户深层心理机制的结构性揭示。"
+            "covered_count": 4,
+            "missed_count": 1,
+            "comment": "最明显的缺口：建议②中缺少关键认知矫正——'第一次说'我爱你'不会让ta立刻走，但一直不说可能会'。joker给出了'做小实验'的行动建议，但没有明确点出这个核心的认知反转点，即用户最恐惧的'说了就会失去'其实是不成立的。"
           }
         },
         "correctness": {
-          "direction": "B",
-          "theory_usage": "B",
-          "actionable": "B",
-          "comment": "分析覆盖了焦虑型依恋和自我实现预言，但未揭示最核心的认知洞察——用户用'预期被抛弃'合理化回避，主动推动ta离开。理论引用多但表面化，建议不具体。结构精细但深度不足。",
+          "direction": "A",
+          "theory_usage": "A",
+          "actionable": "A",
+          "comment": "准确识别了自我实现预言的核心机制，理论运用恰当且结合具体行为，给出了可操作的低风险表露实验建议，分析质量高。",
           "scores": {
-            "direction": 0.6,
-            "theory": 0.5,
-            "actionable": 0.5
+            "direction": 1.0,
+            "theory": 1.0,
+            "actionable": 1.0
           },
-          "total": 0.53,
+          "total": 1.0,
           "raw_response": {
-            "direction": "B",
-            "theory_usage": "B",
-            "actionable": "B",
-            "comment": "分析覆盖了焦虑型依恋和自我实现预言，但未揭示最核心的认知洞察——用户用'预期被抛弃'合理化回避，主动推动ta离开。理论引用多但表面化，建议不具体。结构精细但深度不足。"
+            "direction": "A",
+            "theory_usage": "A",
+            "actionable": "A",
+            "comment": "准确识别了自我实现预言的核心机制，理论运用恰当且结合具体行为，给出了可操作的低风险表露实验建议，分析质量高。",
+            "scores": {
+              "direction": 1.0,
+              "theory": 1.0,
+              "actionable": 1.0
+            }
           }
         }
       }
@@ -595,66 +640,71 @@
       "scores": {
         "rag": {
           "retrieved": [
-            "认知失调",
             "情绪推理",
+            "认知失调",
             "依恋理论-回避型"
           ],
           "relevant": [
-            "投射效应",
-            "情绪推理",
+            "基本归因错误",
             "互惠规范",
-            "基本归因错误"
+            "投射效应",
+            "情绪推理"
           ],
-          "recall_1": 0,
+          "recall_1": 1,
           "recall_3": 0.25,
           "hits": [
             "情绪推理"
           ],
           "misses": [
-            "投射效应",
+            "基本归因错误",
             "互惠规范",
-            "基本归因错误"
+            "投射效应"
           ]
         },
         "structural": {
           "checks": {
             "graph_completed": true,
-            "all_claims_have_evidence": false,
+            "all_claims_have_evidence": true,
             "all_claims_have_alternatives": false,
             "info_symmetry_produced": true,
             "contradictions_produced": true
           },
-          "passed": 3,
+          "passed": 4,
           "total": 5,
-          "score": 0.6
+          "score": 0.8
         },
         "coverage": {
-          "covered_count": 4,
-          "missed_count": 2,
-          "comment": "投射效应（用户把自己的感知能力投射给ta，认为ta也一定能注意到）未被明确讨论；建议①（学会直接表达需要而非等对方猜）也未作为建议方向出现，joker更多停留在解释矛盾而非给出行动指引。",
-          "score": 0.67,
+          "covered_count": 6,
+          "missed_count": 1,
+          "comment": "joker 完整覆盖了三层认知偏差分析（基本归因错误、情绪推理+互惠规范、投射效应）以及直接表达需求的建议，但遗漏了期望中明确要求的'这是重复模式而非一次性失误'这一关键点——ta说'你每次都是在生气'说明模式已固化，joker 未讨论这一重复性含义。",
+          "score": 0.86,
           "raw_response": {
-            "covered_count": 4,
-            "missed_count": 2,
-            "comment": "投射效应（用户把自己的感知能力投射给ta，认为ta也一定能注意到）未被明确讨论；建议①（学会直接表达需要而非等对方猜）也未作为建议方向出现，joker更多停留在解释矛盾而非给出行动指引。"
+            "covered_count": 6,
+            "missed_count": 1,
+            "comment": "joker 完整覆盖了三层认知偏差分析（基本归因错误、情绪推理+互惠规范、投射效应）以及直接表达需求的建议，但遗漏了期望中明确要求的'这是重复模式而非一次性失误'这一关键点——ta说'你每次都是在生气'说明模式已固化，joker 未讨论这一重复性含义。"
           }
         },
         "correctness": {
           "direction": "B",
-          "theory_usage": "C",
-          "actionable": "B",
-          "comment": "核心方向部分正确（覆盖了情绪推理和认知失调，但过度依赖'回避型依恋'标签冲淡了真正关键的隐性互惠账单和投射问题），理论运用牵强（反复强加回避型依恋诊断），可操作性一般（给了方向但不够具体）。",
+          "theory_usage": "B",
+          "actionable": "A",
+          "comment": "核心方向正确（情绪推理+互惠规范+投射效应三层都点到了），但投射效应被过度泛化贴标签，且碎片化的claim结构削弱了整体洞察的连贯性。最终回复的总结和行动建议是亮点。",
           "scores": {
             "direction": 0.6,
-            "theory": 0.2,
-            "actionable": 0.5
+            "theory": 0.5,
+            "actionable": 1.0
           },
-          "total": 0.43,
+          "total": 0.7,
           "raw_response": {
             "direction": "B",
-            "theory_usage": "C",
-            "actionable": "B",
-            "comment": "核心方向部分正确（覆盖了情绪推理和认知失调，但过度依赖'回避型依恋'标签冲淡了真正关键的隐性互惠账单和投射问题），理论运用牵强（反复强加回避型依恋诊断），可操作性一般（给了方向但不够具体）。"
+            "theory_usage": "B",
+            "actionable": "A",
+            "comment": "核心方向正确（情绪推理+互惠规范+投射效应三层都点到了），但投射效应被过度泛化贴标签，且碎片化的claim结构削弱了整体洞察的连贯性。最终回复的总结和行动建议是亮点。",
+            "scores": {
+              "direction": 0.6,
+              "theory": 0.5,
+              "actionable": 1.0
+            }
           }
         }
       }

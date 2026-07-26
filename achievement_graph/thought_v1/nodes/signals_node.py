@@ -1,13 +1,16 @@
 """
 信号处理节点 v2：checklist → 代码算分
 LLM 回答 10 道选择题，Python 根据答案计算 initiative_score / emotional_explicitness / signal_clarity。
+DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 JSON 输出（与 evidence/alternative 节点一致）
 """
+
+import json
+import re
 
 from ..state.JokerState import JokerState, SignalBehavior, PersonSignals, AllSignals
 from tools.llm.deepseek_llm import llm
-from tools.llm.safe_llm_call import safe_llm_call
 from tools.loader.load_prompts import load_prompt
-from langchain.tools import tool
+from tools.logger import get_logger
 from langchain.messages import SystemMessage, HumanMessage
 
 
@@ -71,43 +74,30 @@ def _calc_behavior_confidence(behavior: dict) -> dict:
     return behavior
 
 
-@tool
-def signals_return(user_signals: dict, ta_signals: dict) -> dict:
-    """
-    返回用户和对方的信号分析结果（checklist 答案 + 行为提取），由代码据此算分。
-
-    user_signals / ta_signals 结构完全相同：
-    {
-        "initiative_checklist": {
-            "initiates_frequently": "经常|偶尔|很少",
-            "initiates_meetups": "是|否",
-            "sustains_dialogue": "是|部分|否",
-            "expresses_needs": "明确|暗示|无"
-        },
-        "emotional_checklist": {
-            "expresses_emotion": "明确|暗示|回避",
-            "language_intensity": "高|中|低",
-            "perceptibility": "能|模糊|不能"
-        },
-        "clarity_checklist": {
-            "directness": "直接|间接|隐晦",
-            "ambiguity": "1种解读|2种解读|≥3种解读",
-            "consistency": "一致|部分一致|不一致"
-        },
-        "behaviors": [
-            {"action": str, "signal_type": str, "confidence": float, "source_ref": str},
-            ...
-        ]
-    }
-
-    注意：
-    - checklist 每题必须三选一，不要编造选项外的值
-    - behaviors 可空列表（本轮无新行为时传 []）
-    """
-    return {"user_signals": user_signals, "ta_signals": ta_signals}
+def _extract_json(text: str) -> dict | None:
+    """从 LLM 文本回复中提取 JSON 对象。处理 ```json ... ``` 包裹或裸 JSON。"""
+    try:
+        return json.loads(text.strip())
+    except json.JSONDecodeError:
+        pass
+    m = re.search(r'```(?:json)?\s*([\s\S]*?)```', text)
+    if m:
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+    start = text.find('{')
+    end = text.rfind('}')
+    if start != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1])
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 def signals_node(state: JokerState) -> dict:
+    log = get_logger()
     if not state['new_signals']:
         return {}
 
@@ -126,53 +116,59 @@ def signals_node(state: JokerState) -> dict:
     else:
         prefix = "【首轮模式】请基于以下内容进行完整的信号分析。"
 
-    response = safe_llm_call(llm, [signals_return], [
-        SystemMessage(content=signals_prompt),
-        HumanMessage(content=f"{prefix}\n\n{signal_resource_message}")
-    ], node_name="SIGNALS")
+    extra = "【只返回JSON，不要任何其他文字。返回格式：{\"user_signals\": {...}, \"ta_signals\": {...}}。】"
 
-    if response is None:
-        return {}
-
-    tool_call = response.tool_calls[-1]
-    args = tool_call["args"]
-    user_data = args.get("user_signals", {})
-    ta_data   = args.get("ta_signals", {})
-
-    # 防御：LLM 可能把 dict 参数序列化成 JSON 字符串
-    if isinstance(user_data, str):
+    # DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 LLM + JSON 解析
+    for attempt in range(3):
         try:
-            import json as _json
-            user_data = _json.loads(user_data)
-        except Exception:
-            user_data = {}
-    if isinstance(ta_data, str):
-        try:
-            import json as _json
-            ta_data = _json.loads(ta_data)
-        except Exception:
-            ta_data = {}
+            response = llm.invoke([
+                SystemMessage(content=signals_prompt),
+                HumanMessage(content=f"{prefix}\n\n{extra}\n\n{signal_resource_message}")
+            ])
+            parsed = _extract_json(response.content if hasattr(response, 'content') else str(response))
+            if parsed and isinstance(parsed, dict):
+                user_data = parsed.get("user_signals", {})
+                ta_data = parsed.get("ta_signals", {})
 
-    user_behaviors = [_calc_behavior_confidence(b) for b in user_data.get("behaviors", [])]
-    ta_behaviors   = [_calc_behavior_confidence(b) for b in ta_data.get("behaviors", [])]
+                # 防御：LLM 可能把 dict 序列化成 JSON 字符串
+                if isinstance(user_data, str):
+                    try:
+                        user_data = json.loads(user_data)
+                    except Exception:
+                        user_data = {}
+                if isinstance(ta_data, str):
+                    try:
+                        ta_data = json.loads(ta_data)
+                    except Exception:
+                        ta_data = {}
 
-    # === 代码算分 ===
-    all_signals = {
-        "user": {
-            "initiative_score":       _calc_score(user_data.get("initiative_checklist", {}), INITIATIVE_DIMS),
-            "emotional_explicitness": _calc_score(user_data.get("emotional_checklist", {}), EMOTIONAL_DIMS),
-            "signal_clarity":         _calc_score(user_data.get("clarity_checklist", {}),   CLARITY_DIMS),
-            "behaviors":              user_behaviors,
-        },
-        "ta": {
-            "initiative_score":       _calc_score(ta_data.get("initiative_checklist", {}), INITIATIVE_DIMS),
-            "emotional_explicitness": _calc_score(ta_data.get("emotional_checklist", {}), EMOTIONAL_DIMS),
-            "signal_clarity":         _calc_score(ta_data.get("clarity_checklist", {}),   CLARITY_DIMS),
-            "behaviors":              ta_behaviors,
-        },
-    }
+                user_behaviors = [_calc_behavior_confidence(b) for b in user_data.get("behaviors", [])]
+                ta_behaviors   = [_calc_behavior_confidence(b) for b in ta_data.get("behaviors", [])]
 
-    return {"all_signals": all_signals}
+                # === 代码算分 ===
+                all_signals = {
+                    "user": {
+                        "initiative_score":       _calc_score(user_data.get("initiative_checklist", {}), INITIATIVE_DIMS),
+                        "emotional_explicitness": _calc_score(user_data.get("emotional_checklist", {}), EMOTIONAL_DIMS),
+                        "signal_clarity":         _calc_score(user_data.get("clarity_checklist", {}),   CLARITY_DIMS),
+                        "behaviors":              user_behaviors,
+                    },
+                    "ta": {
+                        "initiative_score":       _calc_score(ta_data.get("initiative_checklist", {}), INITIATIVE_DIMS),
+                        "emotional_explicitness": _calc_score(ta_data.get("emotional_checklist", {}), EMOTIONAL_DIMS),
+                        "signal_clarity":         _calc_score(ta_data.get("clarity_checklist", {}),   CLARITY_DIMS),
+                        "behaviors":              ta_behaviors,
+                    },
+                }
+
+                log.info("SIGNALS", "LLM 调用成功")
+                return {"all_signals": all_signals}
+
+            log.warn("SIGNALS", "JSON 解析失败或 user_signals/ta_signals 缺失", attempt=attempt + 1)
+        except Exception as e:
+            log.warn("SIGNALS", "调用异常", attempt=attempt + 1, error=str(e))
+
+    return {}
 
 
 if __name__ == "__main__":
@@ -191,5 +187,5 @@ if __name__ == "__main__":
         "new_signals": True,
     }
     result = signals_node(test_state)
-    import json
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    import json as _json
+    print(_json.dumps(result, ensure_ascii=False, indent=2))

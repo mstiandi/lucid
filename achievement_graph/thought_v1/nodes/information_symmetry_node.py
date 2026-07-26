@@ -1,13 +1,16 @@
 """
 信息对称性节点 v2：checklist → 代码判定 is_sufficient + 输出校验
+DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 JSON 输出（与 evidence/alternative 节点一致）
 """
 
+import json
+import re
+
 from ..state.JokerState import JokerState, InfoSymmetryItem
-from langchain.tools import tool
 from tools.loader.load_prompts import load_prompt
 from tools.llm.deepseek_llm import llm
-from tools.llm.safe_llm_call import safe_llm_call
 from tools.context.prompt_builder import build_prompt
+from tools.logger import get_logger
 from langchain.messages import SystemMessage
 
 
@@ -56,29 +59,30 @@ def _validate_info_items(info_symmetry: dict) -> dict:
     return info_symmetry
 
 
-@tool
-def information_symmetry_return(info_symmetry: dict[str, dict]) -> dict:
-    """
-    information_symmetry_agent 的返回值。
-    Args:
-        info_symmetry (dict[str, dict]):
-        键是 claim 的 content，值结构：
-        {
-            "from_": "user" | "ta",
-            "user_knew": bool,
-            "ta_knew": bool,
-            "checklist": {
-                "has_ta_signals": "有|仅有用户陈述|无",
-                "claim_specificity": "直接相关|间接相关|无关",
-                "gap_size": "小|中|大"
-            }
-        }
-        is_sufficient 由代码根据 checklist 计算，不需要返回。
-    """
-    return {"info_symmetry": info_symmetry}
+def _extract_json(text: str) -> dict | None:
+    """从 LLM 文本回复中提取 JSON 对象。处理 ```json ... ``` 包裹或裸 JSON。"""
+    try:
+        return json.loads(text.strip())
+    except json.JSONDecodeError:
+        pass
+    m = re.search(r'```(?:json)?\s*([\s\S]*?)```', text)
+    if m:
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+    start = text.find('{')
+    end = text.rfind('}')
+    if start != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1])
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 def information_symmetry_node(state: JokerState) -> dict:
+    log = get_logger()
     pending_claims = [c for c in state["all_claims"] if c.get("status", "pending") == "pending"]
     info_symmetry_claims = [c for c in pending_claims if c.get("direction", "single") == "both"]
 
@@ -92,25 +96,31 @@ def information_symmetry_node(state: JokerState) -> dict:
         system_prompt=load_prompt("information_symmetry_prompt.md"),
         all_signals=state.get("all_signals"),
         claims_text="所有direction为both的待处理的claims如下（每条前面有编号）：\n" + needed_claims,
+        extra="【只返回JSON，不要任何其他文字。返回格式：{\"info_symmetry\": {...}}。每个 key 是 claim 的原文。】",
     )
 
-    response = safe_llm_call(llm, [information_symmetry_return],
-        [SystemMessage(content=prompt)], node_name="INFO_SYMM")
+    # DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 LLM + JSON 解析
+    for attempt in range(3):
+        try:
+            response = llm.invoke([SystemMessage(content=prompt)])
+            parsed = _extract_json(response.content if hasattr(response, 'content') else str(response))
+            if parsed and isinstance(parsed, dict) and "info_symmetry" in parsed:
+                updated_info_symmetry = parsed["info_symmetry"]
 
-    if response is None:
-        return {}
+                # === 校验 + 算 is_sufficient ===
+                updated_info_symmetry = _validate_info_items(updated_info_symmetry)
 
-    tool_call = response.tool_calls[-1]
-    args = tool_call["args"]
-    updated_info_symmetry = args.get("info_symmetry", {})
+                # === 更新 analysed_by ===
+                updated_claims = [{
+                    "content": c["content"],
+                    "analysed_by": ["information_symmetry_agent"],
+                } for c in info_symmetry_claims]
 
-    # === 校验 + 算 is_sufficient ===
-    updated_info_symmetry = _validate_info_items(updated_info_symmetry)
+                log.info("INFO_SYMM", "LLM 调用成功", claims=len(updated_info_symmetry))
+                return {"info_symmetry": updated_info_symmetry, "all_claims": updated_claims}
 
-    # === 更新 analysed_by ===
-    updated_claims = [{
-        "content": c["content"],
-        "analysed_by": ["information_symmetry_agent"],
-    } for c in info_symmetry_claims]
+            log.warn("INFO_SYMM", "JSON 解析失败或 info_symmetry 缺失", attempt=attempt + 1)
+        except Exception as e:
+            log.warn("INFO_SYMM", "调用异常", attempt=attempt + 1, error=str(e))
 
-    return {"info_symmetry": updated_info_symmetry, "all_claims": updated_claims}
+    return {}
