@@ -24,10 +24,11 @@ def contradictions_reducer(old_contradictions: dict | None, new_contradictions: 
             old_contradictions[claim_content] = new_items
         else:
             existing_items = old_contradictions[claim_content]
-            existing_reasons = {item["reason"] for item in existing_items}
+            existing_keys = {(item.get("type", ""), item["reason"]) for item in existing_items}
             for new_item in new_items:
-                if new_item["reason"] not in existing_reasons:
+                key = (new_item.get("type", ""), new_item["reason"])
+                if key not in existing_keys:
                     existing_items.append(new_item)
-                    existing_reasons.add(new_item["reason"])
+                    existing_keys.add(key)
 
     return old_contradictions

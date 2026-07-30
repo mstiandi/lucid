@@ -40,6 +40,7 @@ class AllSignals(TypedDict):
     ta: PersonSignals
 
 class ContradictionItem(TypedDict):
+    type: str  # "weak_evidence" | "alternative_explanation"
     reason: str
 
 class InfoSymmetryItem(TypedDict):
