@@ -13,7 +13,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from tools.llm.deepseek_llm import llm
+from tools.llm.chat_llm import llm
 from tools.loader.load_prompts import load_prompt
 from langchain.tools import tool
 from langchain.messages import SystemMessage

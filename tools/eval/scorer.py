@@ -4,6 +4,7 @@
 - 结构完整性（各节点是否产出非空结果）
 """
 
+from langchain.messages import AIMessage
 from tools.rag.retriever import retrieve_theories_raw
 
 
@@ -76,7 +77,8 @@ def score_structure(result: dict) -> dict:
 
     # 1. graph 是否完成（有 messages 且最后一条非空）
     messages = result.get("messages", [])
-    checks["graph_completed"] = bool(messages)
+    checks["graph_completed"] = any(isinstance(message, AIMessage) for message in messages)
+    # 只有summary节点会往messages中塞AIMessage
 
     # 2. 每个 claim 是否有 evidence
     claims = result.get("all_claims", [])
@@ -94,7 +96,7 @@ def score_structure(result: dict) -> dict:
     # 3. info_symmetry 是否有产出
     info_sym = result.get("info_symmetry", {})
     checks["info_symmetry_produced"] = bool(info_sym) and any(
-        v.get("is_sufficient") is not None for v in info_sym.values()
+        v.get("is_sufficient") is not None for v in info_sym.values() # info_symmetry节点被执行就行了
         if isinstance(v, dict)
     )
 

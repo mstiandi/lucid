@@ -4,11 +4,11 @@ DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 JSON �
 """
 
 import json
-import re
+from tools.llm._extract_json import extract_json
 
 from ..state.JokerState import JokerState, InfoSymmetryItem
 from tools.loader.load_prompts import load_prompt
-from tools.llm.deepseek_llm import llm
+from tools.llm.chat_llm import llm
 from tools.context.prompt_builder import build_prompt
 from tools.logger import get_logger
 from langchain.messages import SystemMessage
@@ -59,27 +59,6 @@ def _validate_info_items(info_symmetry: dict) -> dict:
     return info_symmetry
 
 
-def _extract_json(text: str) -> dict | None:
-    """从 LLM 文本回复中提取 JSON 对象。处理 ```json ... ``` 包裹或裸 JSON。"""
-    try:
-        return json.loads(text.strip())
-    except json.JSONDecodeError:
-        pass
-    m = re.search(r'```(?:json)?\s*([\s\S]*?)```', text)
-    if m:
-        try:
-            return json.loads(m.group(1).strip())
-        except json.JSONDecodeError:
-            pass
-    start = text.find('{')
-    end = text.rfind('}')
-    if start != -1 and end > start:
-        try:
-            return json.loads(text[start:end + 1])
-        except json.JSONDecodeError:
-            pass
-    return None
-
 
 def information_symmetry_node(state: JokerState) -> dict:
     log = get_logger()
@@ -99,11 +78,13 @@ def information_symmetry_node(state: JokerState) -> dict:
         extra="【只返回JSON，不要任何其他文字。返回格式：{\"info_symmetry\": {...}}。每个 key 是 claim 的原文。】",
     )
 
+    retry_hint = ""
+
     # DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 LLM + JSON 解析
     for attempt in range(3):
         try:
-            response = llm.invoke([SystemMessage(content=prompt)])
-            parsed = _extract_json(response.content if hasattr(response, 'content') else str(response))
+            response = llm.invoke([SystemMessage(content=prompt + retry_hint)])
+            parsed = extract_json(response.content if hasattr(response, 'content') else str(response))
             if parsed and isinstance(parsed, dict) and "info_symmetry" in parsed:
                 updated_info_symmetry = parsed["info_symmetry"]
 
@@ -119,8 +100,11 @@ def information_symmetry_node(state: JokerState) -> dict:
                 log.info("INFO_SYMM", "LLM 调用成功", claims=len(updated_info_symmetry))
                 return {"info_symmetry": updated_info_symmetry, "all_claims": updated_claims}
 
-            log.warn("INFO_SYMM", "JSON 解析失败或 info_symmetry 缺失", attempt=attempt + 1)
+            preview = raw_text[:300] if (raw_text := (response.content if hasattr(response, 'content') else str(response))) else "(empty)"
+            log.warn("INFO_SYMM", "JSON 解析失败或 info_symmetry 缺失", attempt=attempt + 1, raw_preview=preview)
+            retry_hint = f"\n\n【上一轮返回的 JSON 格式无效。你的上一轮输出以如下内容开头：\n```\n{preview}\n```\n请确保：1) 所有字符串用双引号包裹 2) 没有末尾多余逗号 3) 所有花括号完整闭合。请重试返回合法 JSON。】"
         except Exception as e:
             log.warn("INFO_SYMM", "调用异常", attempt=attempt + 1, error=str(e))
+            retry_hint = f"\n\n【上一轮调用异常。请重试返回合法 JSON。】"
 
     return {}

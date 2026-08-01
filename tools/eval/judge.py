@@ -141,8 +141,8 @@ def judge_coverage(scenario: dict, result: dict) -> dict:
 请统计 covered（完全或充分覆盖）和 missed（缺失或擦边）的关键点数，并给出一个简短评论。"""
 
     # 双跑取均值
-    runs = [_run_single_coverage(prompt) for _ in range(2)]
-    runs = [r for r in runs if r is not None]
+    runs = [_run_single_coverage(prompt) for _ in range(2)]  # 双跑
+    runs = [r for r in runs if r is not None]  # 过滤None
 
     if not runs:
         return {

@@ -14,7 +14,7 @@ summary_agent，总结节点
 
 from ..state.JokerState import JokerState
 from tools.loader.load_prompts import load_prompt
-from tools.llm.deepseek_llm import llm
+from tools.llm.chat_llm import llm
 from tools.logger import get_logger
 from langchain.messages import SystemMessage, AIMessage
 
@@ -46,7 +46,7 @@ def summary_node(state: JokerState, *, store=None) -> dict:
         system_message += "\n\n⚠️ 以下 claim 的替代解释节点未能产出替代解释（可能信号不足或观点本身难以反驳）:\n" + "\n".join([f"- {g}" for g in alt_gaps])
         system_message += "\n请在总结中对这些 claim 的分析结论持保留态度，并提醒用户：这部分分析只基于现有证据的一个方向，可能有其他角度未被覆盖。"
     if not pending_claims and not curr_contradictions and not curr_info_symmetry:
-        system_message += "\n\n本轮对话中没有待处理的claims，也没有矛盾和信息对称性分析结果。"
+        system_message += "\n\n本轮对话中没有待处理的claims，也没有矛盾和信息对称性分析结果。只需友好回应用户即可，不需要进行分析。"
     
     # AIMessage，这个就是用于回答的东西
     try:

@@ -74,6 +74,8 @@ class TheoryStore:
 
     def is_indexed(self) -> bool:
         return self._embeddings is not None and len(self._embeddings) > 0
+        # len(self._embeddings) == self._embeddings.shape[0]
+        # (10, 768)
 
     def ensure_indexed(self, force: bool = False) -> int:
         """
@@ -87,7 +89,7 @@ class TheoryStore:
         if not self._cards:
             return 0
 
-        search_texts = [_build_search_text(c) for c in self._cards]
+        search_texts = [_build_search_text(c) for c in self._cards] # 不要把id和common_misinterpretations字段加里面了
         self._embeddings = self.model.encode(
             search_texts,
             normalize_embeddings=True,
@@ -115,6 +117,7 @@ class TheoryStore:
         # 余弦相似度 = 归一化向量的点积
         scores = np.dot(self._embeddings, query_emb.T).flatten()  # shape: (n_cards,)
         top_indices = np.argsort(scores)[::-1][:top_k]
+        # argsort是从小到大返回下标，[::-1]颠倒顺序操作，[:top_k]取top_k
 
         return [dict(self._cards[i]) for i in top_indices]
 
