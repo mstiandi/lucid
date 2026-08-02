@@ -116,6 +116,18 @@ class TheoryStore:
 
         # 余弦相似度 = 归一化向量的点积
         scores = np.dot(self._embeddings, query_emb.T).flatten()  # shape: (n_cards,)
+        # self._embeddings shape (10, 768)
+        # query_emb shape (1, 768) --> .T  -> (768, 1)
+        # (10, 1)
+        # -> flatten -> (10, )
+#   换个乱的：scores = [0.74, 0.52, 0.62]（卡片0分最高，卡片1分最低）
+
+#   argsort → [1, 2, 0]   从小到大：位置1(0.52) < 位置2(0.62) < 位置0(0.74)
+
+#   然后 [::-1] 颠倒：[0, 2, 1] ——最高分在位置 0，其次位置 2，最差位置 1。
+
+#   然后 [:2] 取前 2：[0, 2] ——返回卡片 0 和卡片 2。
+
         top_indices = np.argsort(scores)[::-1][:top_k]
         # argsort是从小到大返回下标，[::-1]颠倒顺序操作，[:top_k]取top_k
 
