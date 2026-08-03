@@ -9,7 +9,13 @@ import csv
 import os
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
+
+try:
+    from sentence_transformers import SentenceTransformer
+    _SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    _SENTENCE_TRANSFORMERS_AVAILABLE = False
+    SentenceTransformer = None
 
 
 def _build_search_text(card: dict) -> str:
@@ -42,8 +48,10 @@ class TheoryStore:
         self._embeddings: np.ndarray | None = None  # shape: (n_cards, dim), L2-normalized
 
     @property
-    def model(self) -> SentenceTransformer:
-        """懒加载 embedding 模型。优先本地缓存，未缓存则自动下载。"""
+    def model(self):
+        """懒加载 embedding 模型。sentence_transformers 不可用时抛异常。"""
+        if not _SENTENCE_TRANSFORMERS_AVAILABLE:
+            raise RuntimeError("sentence_transformers 未安装，RAG 不可用")
         if self._model is None:
             model_path = self._resolve_model_path()
             self._model = SentenceTransformer(model_path)

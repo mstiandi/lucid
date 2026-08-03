@@ -51,4 +51,6 @@ with gr.Blocks(title="JOKER") as demo:
 
 
 if __name__ == "__main__":
-    demo.launch(server_name="127.0.0.1", server_port=7860)
+    import os as _os
+    _root = _os.environ.get("GRADIO_ROOT_PATH", "")
+    demo.launch(server_name="127.0.0.1", server_port=7860, root_path=_root if _root else None)

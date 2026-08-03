@@ -1,37 +1,60 @@
 """
 理论检索：输入 pending claims → 拼接 query → 语义检索 → 格式化为 prompt 可注入文本。
+
+当 sentence_transformers 不可用时（如轻量部署），降级为空返回。
 """
 
-from tools.rag.theory_store import TheoryStore
-
 # 模块级单例，import 时（主线程）即初始化，避免在 LangGraph 线程池中首次加载模型
-_store: TheoryStore | None = None
+_store: "TheoryStore | None" = None
+_rag_available: bool | None = None  # None=未检测, True/False=已检测
 
 
-def _get_store() -> TheoryStore:
+def _check_rag() -> bool:
+    """检测 RAG 是否可用，只检测一次。"""
+    global _rag_available
+    if _rag_available is None:
+        try:
+            from tools.rag.theory_store import TheoryStore
+            _rag_available = True
+        except ImportError:
+            _rag_available = False
+    return _rag_available
+
+
+def _get_store() -> "TheoryStore | None":
     global _store
+    if not _check_rag():
+        return None
     if _store is None:
+        from tools.rag.theory_store import TheoryStore
         _store = TheoryStore()
         _store.ensure_indexed()
     return _store
 
 
-# 在 import 时初始化，确保在主线程完成
-_get_store()
+# 在 import 时尝试初始化，确保在主线程完成；失败则降级
+try:
+    _get_store()
+except Exception:
+    _rag_available = False
 
 
 def retrieve_theories_raw(claims: list[dict], top_k: int = 3) -> list[dict]:
     """
     同 retrieve_theories 但不格式化——返回原始卡片 dict 列表，用于评估召回率。
+    RAG 不可用时返回空列表。
     """
     if not claims:
+        return []
+
+    store = _get_store()
+    if store is None:
         return []
 
     query = " ".join([c.get("content", "") for c in claims if c.get("content", "")])
     if not query.strip():
         return []
 
-    store = _get_store()
     return store.search(query, top_k=top_k)
 
 
@@ -56,6 +79,9 @@ def retrieve_theories(claims: list[dict], top_k: int = 3) -> str:
         return ""
 
     store = _get_store()
+    if store is None:
+        return ""
+
     cards = store.search(query, top_k=top_k)
 
     if not cards:
