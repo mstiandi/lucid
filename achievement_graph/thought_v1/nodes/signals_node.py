@@ -5,12 +5,14 @@ DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 JSON �
 """
 
 import json
+import hashlib
 from tools.llm._extract_json import extract_json
 
 from ..state.JokerState import JokerState, SignalBehavior, PersonSignals, AllSignals
-from tools.llm.chat_llm import llm
+from tools.llm.chat_llm import json_llm as llm
 from tools.loader.load_prompts import load_prompt
 from tools.logger import get_logger
+from tools.reducer import merge_all_signals
 from langchain.messages import SystemMessage, HumanMessage
 
 
@@ -75,11 +77,29 @@ def _calc_behavior_confidence(behavior: dict) -> dict:
 
 
 
-def signals_node(state: JokerState) -> dict:
+def _fact_id(person: str, behavior: dict) -> str:
+    """幂等 fact key：同一条行为永远同一个 key，重复写覆盖不新增。"""
+    key = f"{person}|{behavior.get('signal_type', '')}|{behavior.get('action', '')}|{behavior.get('source_ref', '')}"
+    return hashlib.md5(key.encode("utf-8")).hexdigest()[:16]
+
+
+def _write_facts(store, all_signals: dict) -> None:
+    """把本轮新产出的 behaviors 持久化成 fact（出生时记）。"""
+    for person in ["user", "ta"]:
+        for b in all_signals.get(person, {}).get("behaviors", []):
+            store.put(("facts", "main"), _fact_id(person, b), {
+                "person": person,
+                "action": b.get("action", ""),
+                "signal_type": b.get("signal_type", ""),
+                "confidence": b.get("confidence", 0.5),
+                "source_ref": b.get("source_ref", ""),
+            })
+
+
+def signals_node(state: JokerState, *, store=None) -> dict:
     log = get_logger()
     if not state['new_signals']:
         return {}
-
     signal_resource_message = state['messages'][-1] if state['messages'] else "没有消息"
     signal_resource_message = signal_resource_message.content if hasattr(signal_resource_message, 'content') else signal_resource_message
 
@@ -143,7 +163,14 @@ def signals_node(state: JokerState) -> dict:
                 }
 
                 log.info("SIGNALS", "LLM 调用成功")
-                return {"all_signals": all_signals}
+
+                # === fact 出生时写入 store ===
+                if store:
+                    _write_facts(store, all_signals)
+
+                # === 显式合并（all_signals 已是普通字段，不再由 reducer 合并） ===
+                merged = merge_all_signals(state.get("all_signals"), all_signals)
+                return {"all_signals": merged}
 
             preview = raw_text[:300] if (raw_text := (response.content if hasattr(response, 'content') else str(response))) else "(empty)"
             log.warn("SIGNALS", "JSON 解析失败或 user_signals/ta_signals 缺失", attempt=attempt + 1, raw_preview=preview)

@@ -1,2 +1,0 @@
-{"ts": "2026-07-18T15:01:49", "level": "WARN", "node": "PREPROCESS", "msg": "tool_calls 为空，重试中", "data": {"attempt": "1/2"}}
-{"ts": "2026-07-18T15:01:51", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"tokens": 1739, "retries": 1, "latency": 2.3}}

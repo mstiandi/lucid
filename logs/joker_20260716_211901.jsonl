@@ -1,4 +1,0 @@
-{"ts": "2026-07-16T21:19:01", "level": "INFO", "node": "TEST", "msg": "这是 INFO 日志", "data": {"key1": "val1"}}
-{"ts": "2026-07-16T21:19:01", "level": "WARN", "node": "TEST", "msg": "这是 WARN 日志"}
-{"ts": "2026-07-16T21:19:01", "level": "ERROR", "node": "TEST", "msg": "这是 ERROR 日志", "data": {"error": "something broke"}}
-{"ts": "2026-07-16T21:19:01", "level": "DEBUG", "node": "TEST", "msg": "这是 DEBUG 日志"}

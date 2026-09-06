@@ -9,7 +9,7 @@ from tools.llm._extract_json import extract_json
 
 from ..state.JokerState import JokerState
 from tools.loader.load_prompts import load_prompt
-from tools.llm.chat_llm import llm
+from tools.llm.chat_llm import json_llm as llm
 from tools.logger import get_logger
 from langchain.messages import SystemMessage, HumanMessage
 
@@ -26,12 +26,21 @@ def _calc_direction(checklist: dict) -> str:
 
 
 
+def _deep_merge_identity(old: dict, new: dict) -> dict:
+    """字段级合并身份画像：新字段补充，变化字段覆盖。"""
+    merged = {"user": dict(old.get("user", {})), "ta": dict(old.get("ta", {}))}
+    for person in ["user", "ta"]:
+        if isinstance(new.get(person), dict):
+            merged[person].update(new[person])
+    return merged
+
+
 def preprocess_node(state: JokerState, *, store=None) -> dict:
     log = get_logger()
     human_message = state['messages'][-1] if state['messages'] else "没有消息"
     human_message = human_message.content if hasattr(human_message, 'content') else human_message
 
-    extra = "【只返回JSON，不要任何其他文字。返回格式：{\"new_signals\": bool, \"claims\": [...]}。】"
+    extra = "【只返回JSON，不要任何其他文字。返回格式：{\"new_signals\": bool, \"claims\": [...], \"identity\": {\"user\": {...}, \"ta\": {...}}}。】"
 
     retry_hint = ""
 
@@ -58,18 +67,41 @@ def preprocess_node(state: JokerState, *, store=None) -> dict:
                     c.setdefault("evidence_from_signals", {})
                     c.setdefault("alternative_explanations", {})
 
+                # 身份画像：规范化本轮新提取
+                identity = parsed.get("identity", {})
+                if not isinstance(identity, dict):
+                    identity = {}
+                identity = {
+                    "user": identity.get("user", {}) if isinstance(identity.get("user"), dict) else {},
+                    "ta": identity.get("ta", {}) if isinstance(identity.get("ta"), dict) else {},
+                }
+
                 result = {"new_signals": new_signals, "all_claims": claims}
 
-                # 长期记忆加载：当前 state 无历史 → 从 Store 恢复 profile
+                # 身份画像累积：state 里已有的（session 内）→ 首轮从 store 恢复 → 合并本轮新提取
+                existing_identity = state.get("identity") or {"user": {}, "ta": {}}
+                if not (existing_identity.get("user") or existing_identity.get("ta")) and store:
+                    stored = store.get(("profiles", "main", "identity"), "latest")
+                    if stored and isinstance(stored.value, dict):
+                        existing_identity = {
+                            "user": dict(stored.value.get("user", {})),
+                            "ta": dict(stored.value.get("ta", {})),
+                        }
+                result["identity"] = _deep_merge_identity(existing_identity, identity)
+
+                # 动态画像加载：首轮恢复 scores（不恢复 behaviors，观察走检索）
                 if store:
                     has_history = bool(
                         state.get('all_signals', {}).get('user', {}).get('behaviors')
                         or state.get('all_signals', {}).get('ta', {}).get('behaviors')
                     )
                     if not has_history:
-                        profile = store.get(("profiles", "main", "signals"), "latest")
-                        if profile:
-                            result["all_signals"] = profile.value
+                        profile = store.get(("profiles", "main", "scores"), "latest")
+                        if profile and isinstance(profile.value, dict):
+                            result["all_signals"] = {
+                                "user": {**profile.value.get("user", {}), "behaviors": []},
+                                "ta": {**profile.value.get("ta", {}), "behaviors": []},
+                            }
 
                 log.info("PREPROCESS", "LLM 调用成功", claims=len(claims))
                 return result

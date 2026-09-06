@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 运行时数据库（SQLite）
+joker_store.db
+joker_store.db-shm
+joker_store.db-wal
+
+# 前端
+node_modules/
+dist/
+
+# 日志
+logs/
+*.log
+
+# 嵌套参考仓库
+deer-flow/

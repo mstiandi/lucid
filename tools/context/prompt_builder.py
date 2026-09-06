@@ -1,9 +1,9 @@
 """
   核心流程
 
-  build_prompt(node_name, system_prompt, all_signals, claims_text, extra)
+  build_prompt(node_name, system_prompt, all_signals, claims_text, extra, ...)
       │
-      ├── 1. 组装 prompt
+      ├── 1. 组装 prompt（system + identity + theory + fact + claims + signals + extra）
       │
       ├── 2. estimate → ≤ budget → 直接 return
       │               >  budget → 进入第3步
@@ -22,33 +22,10 @@
              这意味着 system_prompt + claims 本身就快超预算，
              应该增大 MAX_TOKEN_MAP 里该节点的值
 
-
-  函数签名
-
-  def build_prompt(
-      node_name: str,
-      system_prompt: str,
-      all_signals: dict | None = None,
-      claims_text: str = "",
-      extra: str = "",
-  ) -> str:
-
-  - node_name：查 MAX_TOKEN_MAP，拿预算值。不在 map 里的节点直接走快速路径，不估算不压缩。
-  - system_prompt：已经 load_prompt() 好的模板内容
-  - all_signals：完整 state，build_prompt 内部决定要不要压缩
-  - claims_text：各节点自己格式化好的 claims 列表字符串（如 "#0 Claim: ...\n#1 Claim: ..."）
-  - extra：各节点特有的附加指令（如 alternative 节点的 【只返回JSON...】）
-
-  
-  事例：
-    prompt = build_prompt(
-      node_name="evidence_node",
-      system_prompt=load_prompt("evidence_prompt.md"),
-      all_signals=state.get("all_signals"),
-      claims_text=needed_claims,
-      extra="请在返回值中给每个 claim 带上 \"claim_index\" 字段，值为对应编号（如 0, 1, ...）。",
-  )
-
+  三个注入的 context（都插在 system_prompt 之后、claims 之前）：
+  - identity_context: 静态画像（身份信息，来自 preprocess 提取）
+  - theory_context:   RAG 检索的理论卡片（来自 theory_store）
+  - fact_context:     记忆 fact 检索（来自 fact_retriever）
 """
 
 import json
@@ -58,6 +35,23 @@ from tools.logger import get_logger
 
 log = get_logger()
 
+
+def format_identity(identity: dict) -> str:
+    """格式化身份画像为 prompt 文本。空画像返回空字符串。"""
+    if not identity:
+        return ""
+    user = identity.get("user", {})
+    ta = identity.get("ta", {})
+    parts = []
+    if user:
+        parts.append("用户：" + "、".join(f"{k}={v}" for k, v in user.items()))
+    if ta:
+        parts.append("对方：" + "、".join(f"{k}={v}" for k, v in ta.items()))
+    if not parts:
+        return ""
+    return "## 身份画像\n" + "\n".join(parts)
+
+
 def build_prompt(
     node_name: str,
     system_prompt: str,
@@ -65,16 +59,20 @@ def build_prompt(
     claims_text: str = "",
     extra: str = "",
     theory_context: str = "",
+    identity_context: str = "",
+    fact_context: str = "",
 ) -> str:
     """
     组装 prompt，并根据 token 预算决定是否压缩 all_signals。
-
-    theory_context: 从 RAG 检索到的理论卡片文本，插在 system_prompt 之后、claims 之前。
     """
     # 1. 组装 prompt
     parts = [system_prompt]
+    if identity_context:
+        parts.append(identity_context)
     if theory_context:
         parts.append(theory_context)
+    if fact_context:
+        parts.append(fact_context)
     if claims_text:
         parts.append(claims_text)
     if all_signals:
@@ -97,8 +95,12 @@ def build_prompt(
     for keep_recent in [5, 0]:
         compressed_signals = compress_signals(all_signals, keep_recent=keep_recent)
         compressed_parts = [system_prompt]
+        if identity_context:
+            compressed_parts.append(identity_context)
         if theory_context:
             compressed_parts.append(theory_context)
+        if fact_context:
+            compressed_parts.append(fact_context)
         if claims_text:
             compressed_parts.append(claims_text)
         if compressed_signals:

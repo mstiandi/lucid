@@ -1,5 +1,0 @@
-{"ts": "2026-07-18T16:50:06", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"tokens": 1995, "retries": 0, "latency": 2.7}}
-{"ts": "2026-07-18T16:50:17", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功", "data": {"tokens": 5567, "retries": 0, "latency": 11.3}}
-{"ts": "2026-07-18T16:50:20", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"tokens": 2866, "retries": 0, "latency": 2.7}}
-{"ts": "2026-07-18T16:50:22", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"tokens": 3280, "retries": 0, "latency": 5.0}}
-{"ts": "2026-07-18T16:50:24", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 7 条替代解释", "data": {"coverage": 2}}

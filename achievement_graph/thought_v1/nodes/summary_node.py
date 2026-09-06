@@ -12,6 +12,8 @@ summary_agent，总结节点
 #     next_agents: list[str]
 #     new_signals: bool  # 覆盖
 
+import json
+
 from ..state.JokerState import JokerState
 from tools.loader.load_prompts import load_prompt
 from tools.llm.chat_llm import llm
@@ -47,7 +49,12 @@ def summary_node(state: JokerState, *, store=None) -> dict:
         system_message += "\n请在总结中对这些 claim 的分析结论持保留态度，并提醒用户：这部分分析只基于现有证据的一个方向，可能有其他角度未被覆盖。"
     if not pending_claims and not curr_contradictions and not curr_info_symmetry:
         system_message += "\n\n本轮对话中没有待处理的claims，也没有矛盾和信息对称性分析结果。只需友好回应用户即可，不需要进行分析。"
-    
+
+    # 注入身份画像（静态画像，用于"合乎身份"的回答）
+    identity = state.get("identity") or {}
+    if identity.get("user") or identity.get("ta"):
+        system_message += "\n\n## 身份画像\n" + json.dumps(identity, ensure_ascii=False)
+
     # AIMessage，这个就是用于回答的东西
     try:
         response = llm.invoke([
@@ -67,13 +74,23 @@ def summary_node(state: JokerState, *, store=None) -> dict:
     if response is None:
         response = AIMessage(content="抱歉，总结生成失败，请重新发送消息。")
 
-    # 长期记忆写入：每轮分析完成后持久化 all_signals + summary
+    # 长期记忆写入：动态画像(scores) + 静态画像(identity) + timeline
     if store:
         import time as _time
-        store.put(("profiles", "main", "signals"), "latest", {
-            "user": state["all_signals"]["user"],
-            "ta": state["all_signals"]["ta"],
+        signals = state.get("all_signals") or {"user": {}, "ta": {}}
+        store.put(("profiles", "main", "scores"), "latest", {
+            "user": {
+                "initiative_score": signals.get("user", {}).get("initiative_score", 0.0),
+                "emotional_explicitness": signals.get("user", {}).get("emotional_explicitness", 0.0),
+                "signal_clarity": signals.get("user", {}).get("signal_clarity", 0.0),
+            },
+            "ta": {
+                "initiative_score": signals.get("ta", {}).get("initiative_score", 0.0),
+                "emotional_explicitness": signals.get("ta", {}).get("emotional_explicitness", 0.0),
+                "signal_clarity": signals.get("ta", {}).get("signal_clarity", 0.0),
+            },
         })
+        store.put(("profiles", "main", "identity"), "latest", state.get("identity") or {"user": {}, "ta": {}})
         store.put(("timeline", "main"), f"round_{int(_time.time())}", {
             "summary": response.content if response else "",
             "claims": [c["content"] for c in pending_claims],

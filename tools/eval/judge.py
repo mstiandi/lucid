@@ -90,6 +90,14 @@ def coverage_return(
     }
 
 
+def _to_int(v, default=0):
+    """LLM tool call 可能把数字返回成字符串（如 "3"），安全转 int。"""
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
+
+
 def _run_single_coverage(prompt: str) -> dict | None:
     """单次覆盖度评分调用。失败返回 None。"""
     response = safe_llm_call(
@@ -101,9 +109,9 @@ def _run_single_coverage(prompt: str) -> dict | None:
         return None
     args = response.tool_calls[0]["args"]
     return {
-        "covered_count": args.get("covered_count", 0),
-        "missed_count": args.get("missed_count", 0),
-        "comment": args.get("comment", ""),
+        "covered_count": _to_int(args.get("covered_count", 0)),
+        "missed_count": _to_int(args.get("missed_count", 0)),
+        "comment": str(args.get("comment", "")),
     }
 
 
@@ -204,9 +212,9 @@ def _run_single_correctness(prompt: str) -> dict | None:
     if response is None:
         return None
     args = response.tool_calls[0]["args"]
-    d = args.get("direction", "B").upper()[0]
-    t = args.get("theory_usage", "B").upper()[0]
-    a = args.get("actionable", "B").upper()[0]
+    d = str(args.get("direction", "B")).upper()[0]
+    t = str(args.get("theory_usage", "B")).upper()[0]
+    a = str(args.get("actionable", "B")).upper()[0]
     return {
         "direction": d,
         "theory_usage": t,

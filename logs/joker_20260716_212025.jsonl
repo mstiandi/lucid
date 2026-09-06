@@ -1,9 +1,0 @@
-{"ts": "2026-07-16T21:20:28", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"tokens": 2122, "retries": 0, "latency": 3.5}}
-{"ts": "2026-07-16T21:20:32", "level": "WARN", "node": "SIGNALS", "msg": "tool_calls 为空，重试中", "data": {"attempt": "1/2"}}
-{"ts": "2026-07-16T21:20:41", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功", "data": {"tokens": 5195, "retries": 1, "latency": 12.2}}
-{"ts": "2026-07-16T21:20:44", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"tokens": 2729, "retries": 0, "latency": 3.3}}
-{"ts": "2026-07-16T21:20:47", "level": "WARN", "node": "ALTERNATIVE", "msg": "JSON 解析失败或 all_claims 缺失", "data": {"attempt": 1}}
-{"ts": "2026-07-16T21:20:49", "level": "WARN", "node": "EVIDENCE", "msg": "tool_calls 为空，重试中", "data": {"attempt": "1/2"}}
-{"ts": "2026-07-16T21:20:52", "level": "WARN", "node": "ALTERNATIVE", "msg": "1 个 claim 无替代解释", "data": {"claims": ["我邀请她去黄山旅游"]}}
-{"ts": "2026-07-16T21:20:52", "level": "INFO", "node": "ALTERNATIVE", "msg": "产出 6 条替代解释", "data": {"coverage": 4}}
-{"ts": "2026-07-16T21:20:56", "level": "INFO", "node": "EVIDENCE", "msg": "LLM 调用成功", "data": {"tokens": 3264, "retries": 1, "latency": 15.6}}

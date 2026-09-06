@@ -1,5 +1,0 @@
-{"ts": "2026-07-18T16:48:11", "level": "INFO", "node": "PREPROCESS", "msg": "LLM 调用成功", "data": {"tokens": 2098, "retries": 0, "latency": 3.2}}
-{"ts": "2026-07-18T16:48:16", "level": "WARN", "node": "SIGNALS", "msg": "tool_calls 为空，重试中", "data": {"attempt": "1/2"}}
-{"ts": "2026-07-18T16:48:24", "level": "WARN", "node": "SIGNALS", "msg": "tool_calls 为空，重试中", "data": {"attempt": "2/2"}}
-{"ts": "2026-07-18T16:48:30", "level": "INFO", "node": "SIGNALS", "msg": "LLM 调用成功", "data": {"tokens": 5145, "retries": 2, "latency": 19.0}}
-{"ts": "2026-07-18T16:48:33", "level": "INFO", "node": "INFO_SYMM", "msg": "LLM 调用成功", "data": {"tokens": 2842, "retries": 0, "latency": 2.8}}

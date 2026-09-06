@@ -17,7 +17,7 @@
 # 然后每次new_signals经过signals_agent，再判定是否需要更新前三个参数，
 # 主要取决于behaviors是否不太符合前三者的既有值
 
-def all_signals_reducer(old_signals: dict | None, new_signals: dict | None) -> dict:
+def merge_all_signals(old_signals: dict | None, new_signals: dict | None) -> dict:
     """
     合并旧的信号和新的信号，返回更新后的all_signals。
     Args:

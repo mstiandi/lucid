@@ -4,7 +4,7 @@
 
 from typing import TypedDict, Literal, Annotated
 from langgraph.graph import add_messages
-from tools.reducer import all_claims_reducer, all_signals_reducer, contradictions_reducer, info_symmetry_reducer
+from tools.reducer import all_claims_reducer, contradictions_reducer, info_symmetry_reducer
 
 # 嵌套结构逐层定义
 class EvidenceItem(TypedDict):
@@ -51,10 +51,11 @@ class InfoSymmetryItem(TypedDict):
 
 class JokerState(TypedDict):
     messages: Annotated[list, add_messages]
-    all_signals: Annotated[AllSignals, all_signals_reducer]
+    all_signals: AllSignals  # 普通字段：signals_node 显式合并，compression_node 替换
     all_claims: Annotated[list[Claim], all_claims_reducer]
     contradictions: Annotated[dict[str, list[ContradictionItem]], contradictions_reducer]  # claim_content -> contradiction_item
     info_symmetry: Annotated[dict[str, InfoSymmetryItem], info_symmetry_reducer]
+    identity: dict  # 静态画像 {"user": {...}, "ta": {...}}
     next_agents: list[str]
     new_signals: bool  # 覆盖
     alt_gaps: list[str]  # 替代解释节点未能产出的 claim content 列表，供 summary 警告用户

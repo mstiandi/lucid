@@ -8,9 +8,10 @@ from tools.llm._extract_json import extract_json
 
 from ..state.JokerState import JokerState, Claim, AlternativeItem
 from tools.loader.load_prompts import load_prompt
-from tools.llm.chat_llm import llm
-from tools.context.prompt_builder import build_prompt
+from tools.llm.chat_llm import json_llm as llm
+from tools.context.prompt_builder import build_prompt, format_identity
 from tools.rag import retrieve_theories
+from tools.rag.fact_retriever import retrieve_facts
 from tools.logger import get_logger
 from tools.llm.claim_index import index_fix_content
 from langchain.messages import SystemMessage
@@ -50,7 +51,7 @@ def _process_claims(claims: list[dict]) -> tuple[list[dict], list[str], int]:
 
 
 
-def alternative_explanation_node(state: JokerState) -> dict:
+def alternative_explanation_node(state: JokerState, *, store=None) -> dict:
     log = get_logger()
     pending_claims = [c for c in state["all_claims"] if c.get("status", "pending") == "pending"]
     if not pending_claims:
@@ -65,6 +66,8 @@ def alternative_explanation_node(state: JokerState) -> dict:
         claims_text="所有status为pending的待验证的claims如下（每条前面有编号）：\n" + needed_claims,
         extra="【只返回JSON，不要任何其他文字。返回格式：{\"all_claims\": [...]}。每个 claim 必须包含 claim_index 字段（值为输入中的 #n 编号，如 0, 1, ...）。】",
         theory_context=retrieve_theories(pending_claims, top_k=3),
+        identity_context=format_identity(state.get("identity") or {}),
+        fact_context=retrieve_facts(pending_claims, store, top_k=3),
     )
 
     retry_hint = ""

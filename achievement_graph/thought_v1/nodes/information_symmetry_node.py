@@ -8,8 +8,9 @@ from tools.llm._extract_json import extract_json
 
 from ..state.JokerState import JokerState, InfoSymmetryItem
 from tools.loader.load_prompts import load_prompt
-from tools.llm.chat_llm import llm
-from tools.context.prompt_builder import build_prompt
+from tools.llm.chat_llm import json_llm as llm
+from tools.context.prompt_builder import build_prompt, format_identity
+from tools.rag.fact_retriever import retrieve_facts
 from tools.logger import get_logger
 from langchain.messages import SystemMessage
 
@@ -60,7 +61,7 @@ def _validate_info_items(info_symmetry: dict) -> dict:
 
 
 
-def information_symmetry_node(state: JokerState) -> dict:
+def information_symmetry_node(state: JokerState, *, store=None) -> dict:
     log = get_logger()
     pending_claims = [c for c in state["all_claims"] if c.get("status", "pending") == "pending"]
     info_symmetry_claims = [c for c in pending_claims if c.get("direction", "single") == "both"]
@@ -76,6 +77,8 @@ def information_symmetry_node(state: JokerState) -> dict:
         all_signals=state.get("all_signals"),
         claims_text="所有direction为both的待处理的claims如下（每条前面有编号）：\n" + needed_claims,
         extra="【只返回JSON，不要任何其他文字。返回格式：{\"info_symmetry\": {...}}。每个 key 是 claim 的原文。】",
+        identity_context=format_identity(state.get("identity") or {}),
+        fact_context=retrieve_facts(info_symmetry_claims, store, top_k=3),
     )
 
     retry_hint = ""

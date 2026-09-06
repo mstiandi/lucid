@@ -1,4 +1,5 @@
 from .alternative_explanation_node import alternative_explanation_node
+from .compression_node import compression_node
 from .contradictory_registration_node import contradictory_registration_node
 from .evidence_node import evidence_node
 from .information_symmetry_node import information_symmetry_node

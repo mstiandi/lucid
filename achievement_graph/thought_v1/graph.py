@@ -4,7 +4,7 @@
 
 from .state.JokerState import JokerState # 这个点.应该是相对于当前的文件而言的
 from langgraph.graph import StateGraph
-from .nodes import alternative_explanation_node, contradictory_registration_node, evidence_node, information_symmetry_node, preprocess_node, supervisor_node, summary_node, signals_node
+from .nodes import alternative_explanation_node, compression_node, contradictory_registration_node, evidence_node, information_symmetry_node, preprocess_node, supervisor_node, summary_node, signals_node
 from langgraph.checkpoint.memory import MemorySaver
 from tools.memory import SqliteStore
 
@@ -32,13 +32,15 @@ graph.add_node("contradictory_registration_node", contradictory_registration_nod
 graph.add_node("evidence_node", evidence_node)
 graph.add_node("information_symmetry_node", information_symmetry_node)
 graph.add_node("supervisor_node", supervisor_node)
+graph.add_node("compression_node", compression_node)
 graph.add_node("summary_node", summary_node)
 graph.add_node("signals_node", signals_node)
 
 graph.add_edge("__start__", "preprocess_node")
 graph.add_edge("preprocess_node", "signals_node")
 graph.add_edge("preprocess_node", "supervisor_node")
-graph.add_conditional_edges("supervisor_node", route_fn, VALID_AGENTS)
+graph.add_edge("supervisor_node", "compression_node")
+graph.add_conditional_edges("compression_node", route_fn, VALID_AGENTS)
 graph.add_edge("evidence_node", "contradictory_registration_node")
 graph.add_edge("alternative_explanation_node", "contradictory_registration_node")
 graph.add_edge("information_symmetry_node", "contradictory_registration_node")

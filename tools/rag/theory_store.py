@@ -10,6 +10,8 @@ import os
 
 import numpy as np
 
+from tools.rag.embedder import get_model
+
 try:
     from sentence_transformers import SentenceTransformer
     _SENTENCE_TRANSFORMERS_AVAILABLE = True
@@ -49,13 +51,10 @@ class TheoryStore:
 
     @property
     def model(self):
-        """懒加载 embedding 模型。sentence_transformers 不可用时抛异常。"""
+        """懒加载 embedding 模型（共享单例）。sentence_transformers 不可用时抛异常。"""
         if not _SENTENCE_TRANSFORMERS_AVAILABLE:
             raise RuntimeError("sentence_transformers 未安装，RAG 不可用")
-        if self._model is None:
-            model_path = self._resolve_model_path()
-            self._model = SentenceTransformer(model_path)
-        return self._model
+        return get_model()
 
     def _resolve_model_path(self) -> str:
         """定位模型路径：本地缓存 → 自动下载 → 返回绝对路径。"""
