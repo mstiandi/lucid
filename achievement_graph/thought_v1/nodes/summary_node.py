@@ -56,10 +56,12 @@ def summary_node(state: JokerState, *, store=None) -> dict:
         system_message += "\n\n## 身份画像\n" + json.dumps(identity, ensure_ascii=False)
 
     # AIMessage，这个就是用于回答的东西
+    # 把当前这条用户消息作为第二条消息传入——否则纯聊天（无 claims）时 LLM 拿不到用户说了什么
+    msgs = [SystemMessage(content=system_message)]
+    if state.get("messages"):
+        msgs.append(state["messages"][-1])
     try:
-        response = llm.invoke([
-            SystemMessage(content=system_message)
-        ])
+        response = llm.invoke(msgs)
     except Exception as e:
         get_logger().error("SUMMARY", "LLM 调用失败", error=str(e))
         response = None
