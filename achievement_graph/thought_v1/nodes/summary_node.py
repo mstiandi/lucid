@@ -56,9 +56,9 @@ def summary_node(state: JokerState, *, store=None) -> dict:
         system_message += "\n\n## 身份画像\n" + json.dumps(identity, ensure_ascii=False)
 
     # AIMessage，这个就是用于回答的东西
-    # 注入完整对话历史——用户这轮常是对上轮分析的反馈，summary 需要完整上下文才能接得上
+    # 注入有界窗口（最近 2 轮）——接得上反馈又不会无限涨 token；长程上下文走 timeline 检索
     msgs = [SystemMessage(content=system_message)]
-    msgs.extend(state.get("messages", []))
+    msgs.extend(state.get("messages", [])[-4:])
     try:
         response = llm.invoke(msgs)
     except Exception as e:
