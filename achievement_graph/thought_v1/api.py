@@ -19,6 +19,7 @@ from langchain.messages import HumanMessage
 from pydantic import BaseModel
 
 from .graph import app as graph_app
+from tools.logger import set_run_id
 
 
 class StreamRequest(BaseModel):
@@ -73,6 +74,7 @@ async def stream(req: StreamRequest):
     config = {"configurable": {"thread_id": thread_id}}
 
     async def gen():
+        set_run_id(thread_id)  # 本轮所有节点日志带上这个 run_id，串成一条调用链
         in_summary = False
         try:
             async for event in graph_app.astream_events(

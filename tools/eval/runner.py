@@ -27,6 +27,7 @@ from langchain.messages import HumanMessage
 from achievement_graph.thought_v1.app import graph_app
 from tools.eval.scorer import score_rag, score_structure
 from tools.eval.judge import judge_coverage, judge_correctness
+from tools.logger import set_run_id
 
 
 # ─── 加载数据集 ───────────────────────────────────────
@@ -55,10 +56,14 @@ def _run_scenario(scenario: dict) -> dict:
     thread_id = f"eval-{scenario['id']}-{uuid.uuid4().hex[:6]}"
     config = {"configurable": {"thread_id": thread_id}}
 
-    result = graph_app.invoke(
-        {"messages": [HumanMessage(content=description)]},
-        config=config,
-    )
+    set_run_id(thread_id)
+    try:
+        result = graph_app.invoke(
+            {"messages": [HumanMessage(content=description)]},
+            config=config,
+        )
+    finally:
+        set_run_id(None)
     return result
 
 

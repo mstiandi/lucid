@@ -10,6 +10,7 @@ from tools.llm._extract_json import extract_json
 from ..state.JokerState import JokerState
 from tools.loader.load_prompts import load_prompt
 from tools.llm.chat_llm import json_llm as llm
+from tools.llm.tracked_llm import invoke_with_tracking
 from tools.logger import get_logger
 from langchain.messages import SystemMessage, HumanMessage
 
@@ -47,10 +48,10 @@ def preprocess_node(state: JokerState, *, store=None) -> dict:
     # DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 LLM + JSON 解析
     for attempt in range(3):
         try:
-            response = llm.invoke([
+            response = invoke_with_tracking(llm, [
                 SystemMessage(content=load_prompt("preprocess_prompt.md")),
                 HumanMessage(content=f"{extra}\n\n{human_message}{retry_hint}")
-            ])
+            ], node="PREPROCESS", attempt=attempt)
             parsed = extract_json(response.content if hasattr(response, 'content') else str(response))
             if parsed and isinstance(parsed, dict):
                 new_signals = parsed.get("new_signals", False)

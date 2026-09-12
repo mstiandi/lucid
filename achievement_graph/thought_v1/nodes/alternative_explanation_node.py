@@ -9,6 +9,7 @@ from tools.llm._extract_json import extract_json
 from ..state.JokerState import JokerState, Claim, AlternativeItem
 from tools.loader.load_prompts import load_prompt
 from tools.llm.chat_llm import json_llm as llm
+from tools.llm.tracked_llm import invoke_with_tracking
 from tools.context.prompt_builder import build_prompt, format_identity
 from tools.rag import retrieve_theories
 from tools.rag.fact_retriever import retrieve_facts
@@ -76,7 +77,7 @@ def alternative_explanation_node(state: JokerState, *, store=None) -> dict:
     for attempt in range(3):
         try:
             full_prompt = prompt + retry_hint
-            response = llm.invoke([SystemMessage(content=full_prompt)])
+            response = invoke_with_tracking(llm, [SystemMessage(content=full_prompt)], node="ALTERNATIVE", attempt=attempt)
             raw_text = response.content if hasattr(response, 'content') else str(response)
             parsed = extract_json(raw_text)
             if parsed and isinstance(parsed, dict) and "all_claims" in parsed:

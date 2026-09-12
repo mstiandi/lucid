@@ -17,6 +17,7 @@ import json
 from ..state.JokerState import JokerState
 from tools.loader.load_prompts import load_prompt
 from tools.llm.chat_llm import llm
+from tools.llm.tracked_llm import invoke_with_tracking
 from tools.logger import get_logger
 from langchain.messages import SystemMessage, AIMessage
 
@@ -60,7 +61,7 @@ def summary_node(state: JokerState, *, store=None) -> dict:
     msgs = [SystemMessage(content=system_message)]
     msgs.extend(state.get("messages", [])[-4:])
     try:
-        response = llm.invoke(msgs)
+        response = invoke_with_tracking(llm, msgs, node="SUMMARY")
     except Exception as e:
         get_logger().error("SUMMARY", "LLM 调用失败", error=str(e))
         response = None

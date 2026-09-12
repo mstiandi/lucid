@@ -10,6 +10,7 @@ from tools.llm._extract_json import extract_json
 
 from ..state.JokerState import JokerState, SignalBehavior, PersonSignals, AllSignals
 from tools.llm.chat_llm import json_llm as llm
+from tools.llm.tracked_llm import invoke_with_tracking
 from tools.loader.load_prompts import load_prompt
 from tools.logger import get_logger
 from tools.reducer import merge_all_signals
@@ -122,10 +123,10 @@ def signals_node(state: JokerState, *, store=None) -> dict:
     # DeepSeek function calling 在复杂嵌套 dict 上不可靠 → 改用纯 LLM + JSON 解析
     for attempt in range(3):
         try:
-            response = llm.invoke([
+            response = invoke_with_tracking(llm, [
                 SystemMessage(content=signals_prompt),
                 HumanMessage(content=f"{prefix}\n\n{extra}\n\n{signal_resource_message}{retry_hint}")
-            ])
+            ], node="SIGNALS", attempt=attempt)
             parsed = extract_json(response.content if hasattr(response, 'content') else str(response))
             if parsed and isinstance(parsed, dict):
                 user_data = parsed.get("user_signals", {})
