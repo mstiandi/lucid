@@ -1,0 +1,38 @@
+{
+  "_doc": "fact 检索质量测试集（M2 定测法，M3 跑数字）。每条 = 一个 query 主张 + 预置的历史 facts + 该命中的 facts。跑法：把 seed_facts 写入 store → retrieve_facts_raw([query_claim], top_k=3) → 检查 relevant_actions 的 fact 是否进 top-3，算 recall@k。",
+  "cases": [
+    {
+      "id": "f1",
+      "query_claim": "她最近是不是对我有点主动了",
+      "seed_facts": [
+        {"person": "ta", "action": "每天早上主动发早安", "signal_type": "主动联系", "source_ref": "她发早安消息", "confidence": 0.8},
+        {"person": "ta", "action": "拒绝一起吃饭", "signal_type": "回避", "source_ref": "她说没空", "confidence": 0.7},
+        {"person": "ta", "action": "回复越来越慢", "signal_type": "疏远", "source_ref": "隔天才回", "confidence": 0.6},
+        {"person": "user", "action": "频繁邀约被拒", "signal_type": "坚持", "source_ref": "我约了她三次", "confidence": 0.9}
+      ],
+      "relevant_actions": ["每天早上主动发早安"]
+    },
+    {
+      "id": "f2",
+      "query_claim": "她是不是只把我当情绪垃圾桶",
+      "seed_facts": [
+        {"person": "ta", "action": "深夜倾诉心事", "signal_type": "情感表达", "source_ref": "半夜发长消息", "confidence": 0.8},
+        {"person": "ta", "action": "从不主动问我的事", "signal_type": "单向", "source_ref": "聊天都是她说", "confidence": 0.7},
+        {"person": "ta", "action": "开心时从不找我", "signal_type": "工具化", "source_ref": "只在难过时出现", "confidence": 0.6},
+        {"person": "user", "action": "每次都耐心听", "signal_type": "付出", "source_ref": "我陪到凌晨", "confidence": 0.9}
+      ],
+      "relevant_actions": ["深夜倾诉心事", "开心时从不找我"]
+    },
+    {
+      "id": "f3",
+      "query_claim": "他说的承诺到底算不算数",
+      "seed_facts": [
+        {"person": "ta", "action": "答应周末见面却爽约", "signal_type": "失信", "source_ref": "说好了又放鸽子", "confidence": 0.9},
+        {"person": "ta", "action": "主动规划未来", "signal_type": "承诺", "source_ref": "他说要一起去旅行", "confidence": 0.7},
+        {"person": "ta", "action": "夸我但从不行动", "signal_type": "口惠", "source_ref": "光说不做", "confidence": 0.6},
+        {"person": "user", "action": "反复确认关系", "signal_type": "不安", "source_ref": "我问了很多次", "confidence": 0.8}
+      ],
+      "relevant_actions": ["答应周末见面却爽约"]
+    }
+  ]
+}

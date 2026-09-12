@@ -21,7 +21,34 @@ from tools.llm.tracked_llm import invoke_with_tracking
 from tools.logger import get_logger
 from langchain.messages import SystemMessage, AIMessage
 
-def summary_node(state: JokerState, *, store=None) -> dict:
+TIMELINE_K = 3  # 中层记忆：注入最近 K 轮 summary 作为长程脉络
+
+
+def _load_timeline(store, thread_id: str, k: int = TIMELINE_K) -> str:
+    """从 store 取本会话最近 k 轮 summary，按旧→新格式化为 prompt 文本。
+
+    中层记忆：每轮 summary 是压缩后的结论，量小，直接按时间取最近 k 条，
+    不需要语义检索（语义检索留给 facts 这种大量原子事实）。空则返回 ""。
+    """
+    if store is None or not thread_id:
+        return ""
+    try:
+        items = store.search(("timeline", thread_id), limit=k)
+    except Exception:
+        return ""
+    summaries = [str(it.value.get("summary", "")).strip()
+                 for it in items
+                 if isinstance(getattr(it, "value", None), dict)
+                 and str(it.value.get("summary", "")).strip()]
+    if not summaries:
+        return ""
+    summaries.reverse()  # search 按 updated_at 倒序（新→旧），反成旧→新
+    return "## 此前对话的分析脉络（最近几轮，从旧到新）\n" + "\n".join(
+        f"{i}. {s}" for i, s in enumerate(summaries, 1)
+    )
+
+
+def summary_node(state: JokerState, *, store=None, config=None) -> dict:
     """
     总结节点，对本轮对话进行总结，返回AIMessage，同时将所有的claims的status更新为analysed。
     分析完成后将 all_signals + summary 写入长期记忆 Store。
@@ -55,6 +82,12 @@ def summary_node(state: JokerState, *, store=None) -> dict:
     identity = state.get("identity") or {}
     if identity.get("user") or identity.get("ta"):
         system_message += "\n\n## 身份画像\n" + json.dumps(identity, ensure_ascii=False)
+
+    # 中层记忆：注入本会话最近几轮 summary（长程脉络），补 [-4:] 硬截断丢掉的历史
+    thread_id = (config or {}).get("configurable", {}).get("thread_id") or "main"
+    timeline_context = _load_timeline(store, thread_id)
+    if timeline_context:
+        system_message += "\n\n" + timeline_context
 
     # AIMessage，这个就是用于回答的东西
     # 注入有界窗口（最近 2 轮）——接得上反馈又不会无限涨 token；长程上下文走 timeline 检索
@@ -93,7 +126,7 @@ def summary_node(state: JokerState, *, store=None) -> dict:
             },
         })
         store.put(("profiles", "main", "identity"), "latest", state.get("identity") or {"user": {}, "ta": {}})
-        store.put(("timeline", "main"), f"round_{int(_time.time())}", {
+        store.put(("timeline", thread_id), f"round_{int(_time.time())}", {
             "summary": response.content if response else "",
             "claims": [c["content"] for c in pending_claims],
         })
