@@ -24,11 +24,15 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from langchain.messages import HumanMessage
+from langgraph.checkpoint.memory import MemorySaver
 
-from achievement_graph.thought_v1.app import graph_app
-from tools.eval.scorer import score_rag, score_structure
+from achievement_graph.thought_v1.graph import graph
+from tools.memory import SqliteStore
+from tools.eval.scorer import score_rag, score_structure, score_fact_rag
 from tools.eval.judge import judge_coverage, judge_correctness
 from tools.logger import set_run_id
+from tools.llm.cost_tracker import get_usage
+from tools.llm.cost_report import usage_to_dict
 
 
 # ─── 加载数据集 ───────────────────────────────────────
@@ -50,22 +54,39 @@ def _load_dataset(path: str) -> list[dict]:
     return valid
 
 
+def _load_fact_cases() -> list[dict]:
+    """加载 fact 检索测试集（M2 定测法，M3 跑数字）。"""
+    path = os.path.join(os.path.dirname(__file__), "fact_retrieval_golden.json")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("cases", [])
+
+
 # ─── 跑一个场景 ───────────────────────────────────────
 
-def _run_scenario(scenario: dict) -> dict:
+def _run_scenario(scenario: dict) -> tuple[dict, dict]:
+    """跑一个场景。返回 (result, usage)。
+
+    usage 是本次 run 的成本账本（get_usage），在 set_run_id(None) 前读出。
+    每个 scenario 用独立 store（内存库），隔离 facts/profiles 跨场景污染。
+    """
     description = scenario["description"]
     thread_id = f"eval-{scenario['id']}-{uuid.uuid4().hex[:6]}"
     config = {"configurable": {"thread_id": thread_id}}
 
+    store = SqliteStore(":memory:")
+    app = graph.compile(checkpointer=MemorySaver(), store=store)
+
     set_run_id(thread_id)
     try:
-        result = graph_app.invoke(
+        result = app.invoke(
             {"messages": [HumanMessage(content=description)]},
             config=config,
         )
     finally:
+        usage = get_usage()
         set_run_id(None)
-    return result
+    return result, usage
 
 
 # ─── 汇总 ─────────────────────────────────────────────
@@ -120,6 +141,38 @@ def _summarize(scenario_results: list[dict]) -> dict:
     }
 
 
+def _summarize_fact_rag(fact_results: list[dict]) -> dict:
+    """fact 检索 recall 汇总。"""
+    vals = [r.get("recall_3") for r in fact_results if r.get("recall_3") is not None]
+    return {
+        "recall_3_avg": round(sum(vals) / len(vals), 2) if vals else None,
+        "case_count": len(fact_results),
+        "evaluated": len(vals),
+    }
+
+
+def _summarize_cost(scenario_results: list[dict]) -> dict:
+    """聚合所有 scenario 的成本（total 行求和）。"""
+    keys = [
+        "input_tokens", "output_tokens", "total_tokens",
+        "calls", "retries", "retry_tokens",
+        "latency_ms", "retry_latency_ms", "missing_usage",
+    ]
+    totals = {k: 0 for k in keys}
+    for r in scenario_results:
+        c = r.get("cost")
+        if not c:
+            continue
+        t = c["total"]
+        for k in keys:
+            totals[k] += t.get(k, 0)
+    totals["retry_token_ratio"] = (
+        round(totals["retry_tokens"] / totals["total_tokens"], 2)
+        if totals["total_tokens"] > 0 else None
+    )
+    return totals
+
+
 # ─── 主入口 ───────────────────────────────────────────
 
 async def run_eval(dataset_path: str | None = None):
@@ -157,11 +210,12 @@ async def run_eval(dataset_path: str | None = None):
         # 2b. Graph
         t0 = time.time()
         try:
-            result = _run_scenario(sc)
+            result, usage = _run_scenario(sc)
             graph_ok = True
         except Exception as e:
             print(f"  [Graph] FAIL: {e}")
             result = {"messages": [], "all_claims": [], "info_symmetry": {}, "contradictions": {}}
+            usage = None
             graph_ok = False
         graph_time = time.time() - t0
         print(f"  [Graph] {'OK' if graph_ok else 'FAIL'} ({graph_time:.1f}s)")
@@ -193,13 +247,26 @@ async def run_eval(dataset_path: str | None = None):
                 "structural": structural,
                 "coverage": coverage,
                 "correctness": correctness,
-            }
+            },
+            "cost": usage_to_dict(usage) if usage and usage.nodes else None,
         })
 
     total_time = time.time() - total_start
 
+    # 2.5 fact 检索 recall（独立测试集，M2 定测法）
+    print(f"\n{'─' * 40}")
+    print("Fact Retrieval Recall（fact_retrieval_golden.json）")
+    fact_results = []
+    for fc in _load_fact_cases():
+        fr = score_fact_rag(fc)
+        fact_results.append({"id": fc.get("id", "?"), **fr})
+        print(f"  [{fc.get('id', '?')}] recall@3={fr.get('recall_3')} "
+              f"retrieved={fr.get('retrieved', [])}")
+    fact_summary = _summarize_fact_rag(fact_results)
+
     # 3. 汇总报告
     summary = _summarize(scenario_results)
+    cost_summary = _summarize_cost(scenario_results)
 
     print(f"\n{'=' * 60}")
     print("Eval Report")
@@ -209,11 +276,20 @@ async def run_eval(dataset_path: str | None = None):
     print()
     print(f"  RAG recall@1:      {summary['rag_recall_1_avg']:.2f}")
     print(f"  RAG recall@3:      {summary['rag_recall_3_avg']:.2f}")
+    if fact_summary['recall_3_avg'] is not None:
+        print(f"  Fact recall@3:     {fact_summary['recall_3_avg']:.2f}")
     print(f"  Structural:        {summary['structural_avg']:.2f}")
     print(f"  Coverage:          {summary['coverage_avg']:.2f}")
     print(f"  Correctness:       {summary['correctness_avg']:.2f}")
     print(f"  ─────────────────────────")
     print(f"  Weighted Total:    {summary['weighted_total']:.2f}")
+    print()
+    print(f"  Cost: in={cost_summary['input_tokens']} out={cost_summary['output_tokens']} "
+          f"total={cost_summary['total_tokens']} tokens")
+    print(f"        retries={cost_summary['retries']} retry_tokens={cost_summary['retry_tokens']} "
+          f"retry_ratio={cost_summary['retry_token_ratio']}")
+    print(f"        latency={cost_summary['latency_ms']/1000:.1f}s "
+          f"retry_latency={cost_summary['retry_latency_ms']/1000:.1f}s")
 
     # 4. 按难度分组
     for diff in ["easy", "medium", "hard"]:
@@ -229,6 +305,8 @@ async def run_eval(dataset_path: str | None = None):
     report = {
         "eval_date": time.strftime("%Y-%m-%d %H:%M"),
         "summary": summary,
+        "fact_rag": {"summary": fact_summary, "cases": fact_results},
+        "cost": cost_summary,
         "scenarios": scenario_results,
     }
     with open(report_path, "w", encoding="utf-8") as f:

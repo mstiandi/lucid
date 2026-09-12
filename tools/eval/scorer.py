@@ -6,6 +6,8 @@
 
 from langchain.messages import AIMessage
 from tools.rag.retriever import retrieve_theories_raw
+from tools.rag.fact_retriever import retrieve_facts_raw
+from tools.memory import SqliteStore
 
 
 # ─── RAG 召回率 ──────────────────────────────────────
@@ -115,4 +117,48 @@ def score_structure(result: dict) -> dict:
         "passed": passed,
         "total": total,
         "score": round(passed / total, 2) if total else 0,
+    }
+
+
+# ─── fact 检索召回率 ───────────────────────────────────
+
+def score_fact_rag(case: dict) -> dict:
+    """
+    消费 fact_retrieval_golden.json 的一条 case，算 fact 检索 recall@3。
+
+    跑法（M2 定测法）：seed_facts 写入独立内存 store → retrieve_facts_raw([query_claim], top_k=3)
+    → 查 relevant_actions 是否进 top-3 → recall@k。
+
+    BGE 不可用时返回 recall_3=None（跳过，不算失败）。
+    """
+    seed_facts = case.get("seed_facts", [])
+    relevant = set(case.get("relevant_actions", []))
+    query_claim = case.get("query_claim", "").strip()
+
+    if not seed_facts or not query_claim:
+        return {"recall_3": None, "note": "case 缺少 seed_facts/query_claim，跳过"}
+    if not relevant:
+        return {"recall_3": None, "note": "case 缺少 relevant_actions，跳过"}
+
+    # 每个 case 独立内存 store，隔离（真实跑也是独立会话）
+    store = SqliteStore(":memory:")
+    for i, f in enumerate(seed_facts):
+        store.put(("facts", "main"), f"seed_{i}", f)
+
+    try:
+        facts = retrieve_facts_raw([{"content": query_claim}], store, top_k=3)
+    except Exception as e:
+        return {"recall_3": None, "note": f"fact 检索失败（BGE 不可用？）：{e}"}
+
+    retrieved_actions = [f.get("action", "") for f in facts]
+    hits = [a for a in retrieved_actions if a in relevant]
+    recall_3 = len(hits) / len(relevant) if relevant else 0
+
+    return {
+        "query_claim": query_claim,
+        "retrieved": retrieved_actions,
+        "relevant": list(relevant),
+        "recall_3": round(recall_3, 2),
+        "hits": hits,
+        "misses": [a for a in relevant if a not in retrieved_actions],
     }

@@ -1,10 +1,12 @@
 """
-共享 LLM 调用工具：重试 + 结构化日志
+共享 LLM 调用工具：重试 + 结构化日志 + 成本记账
 所有 LLM 调用节点统一使用此函数，替代裸 llm.bind_tools().invoke()
 """
 import time
 
 from tools.logger import get_logger
+from tools.llm.tracked_llm import _extract_usage
+from tools.llm.cost_tracker import record
 
 
 def safe_llm_call(llm, tools: list, messages: list, node_name: str = "LLM", max_retries: int = 2):
@@ -22,22 +24,20 @@ def safe_llm_call(llm, tools: list, messages: list, node_name: str = "LLM", max_
         失败 → None
     """
     log = get_logger()
-    start = time.time()
 
     for attempt in range(max_retries + 1):
+        start = time.perf_counter()
         try:
             response = llm.bind_tools(tools).invoke(messages)
+            usage = _extract_usage(response)
+            latency_ms = round((time.perf_counter() - start) * 1000)
 
-            # token 用量
-            n_tokens = "?"
-            if hasattr(response, 'usage_metadata') and response.usage_metadata:
-                n_tokens = response.usage_metadata.get('total_tokens', '?')
-
-            elapsed = time.time() - start
+            # token 记账（无论 tool_calls 是否为空，token 都已烧）
+            record(node_name, usage["input_tokens"], usage["output_tokens"], latency_ms, attempt)
 
             if response.tool_calls:
                 log.info(node_name, "LLM 调用成功",
-                         tokens=n_tokens, retries=attempt, latency=round(elapsed, 1))
+                         attempt=attempt, latency_ms=latency_ms, **usage)
                 return response
             else:
                 if attempt < max_retries:
@@ -48,13 +48,13 @@ def safe_llm_call(llm, tools: list, messages: list, node_name: str = "LLM", max_
                              total_attempts=max_retries + 1)
 
         except Exception as e:
-            elapsed = time.time() - start
+            latency_ms = round((time.perf_counter() - start) * 1000)
             if attempt < max_retries:
                 log.warn(node_name, f"调用失败，重试中",
-                         attempt=f"{attempt+1}/{max_retries}", error=str(e), latency=round(elapsed, 1))
+                         attempt=f"{attempt+1}/{max_retries}", error=str(e), latency_ms=latency_ms)
             else:
                 log.error(node_name, f"所有重试全部失败",
-                          total_attempts=max_retries + 1, error=str(e), latency=round(elapsed, 1))
+                          total_attempts=max_retries + 1, error=str(e), latency_ms=latency_ms)
 
     return None
 
@@ -66,22 +66,19 @@ async def safe_llm_call_async(llm, tools: list, messages: list, node_name: str =
     重试、日志、token 记账逻辑完全一致。
     """
     log = get_logger()
-    start = time.time()
 
     for attempt in range(max_retries + 1):
+        start = time.perf_counter()
         try:
             response = await llm.bind_tools(tools).ainvoke(messages)
+            usage = _extract_usage(response)
+            latency_ms = round((time.perf_counter() - start) * 1000)
 
-            # token 用量
-            n_tokens = "?"
-            if hasattr(response, 'usage_metadata') and response.usage_metadata:
-                n_tokens = response.usage_metadata.get('total_tokens', '?')
-
-            elapsed = time.time() - start
+            record(node_name, usage["input_tokens"], usage["output_tokens"], latency_ms, attempt)
 
             if response.tool_calls:
                 log.info(node_name, "LLM 调用成功",
-                         tokens=n_tokens, retries=attempt, latency=round(elapsed, 1))
+                         attempt=attempt, latency_ms=latency_ms, **usage)
                 return response
             else:
                 if attempt < max_retries:
@@ -92,12 +89,12 @@ async def safe_llm_call_async(llm, tools: list, messages: list, node_name: str =
                              total_attempts=max_retries + 1)
 
         except Exception as e:
-            elapsed = time.time() - start
+            latency_ms = round((time.perf_counter() - start) * 1000)
             if attempt < max_retries:
                 log.warn(node_name, f"调用失败，重试中",
-                         attempt=f"{attempt+1}/{max_retries}", error=str(e), latency=round(elapsed, 1))
+                         attempt=f"{attempt+1}/{max_retries}", error=str(e), latency_ms=latency_ms)
             else:
                 log.error(node_name, f"所有重试全部失败",
-                          total_attempts=max_retries + 1, error=str(e), latency=round(elapsed, 1))
+                          total_attempts=max_retries + 1, error=str(e), latency_ms=latency_ms)
 
     return None

@@ -7,6 +7,8 @@ import uuid
 import gradio as gr
 from langchain.messages import HumanMessage
 from .graph import app as graph_app  # 同级 graph.py 里编译好的 LangGraph
+from tools.logger import set_run_id
+from tools.llm.cost_report import log_run_summary
 
 
 def respond(user_msg: str, history: list, thread_id: str):
@@ -23,7 +25,12 @@ def respond(user_msg: str, history: list, thread_id: str):
     config = {"configurable": {"thread_id": thread_id}}
 
     # 只传新消息;旧状态由 MemorySaver 按 thread_id 续上
-    result = graph_app.invoke({"messages": [HumanMessage(content=user_msg)]}, config=config)
+    set_run_id(thread_id)  # 开成本账本，本轮所有节点调用计入
+    try:
+        result = graph_app.invoke({"messages": [HumanMessage(content=user_msg)]}, config=config)
+    finally:
+        log_run_summary()  # 在 reset 前读账本，打本轮 LLM 汇总
+        set_run_id(None)
     reply = result["messages"][-1].content if result.get("messages") else "（无回复）"
 
     history = history + [

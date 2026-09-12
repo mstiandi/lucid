@@ -21,6 +21,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from tools.llm.cost_tracker import start_run, reset_run
+
 # 一次调用（一个 thread_id）的关联标识。api.py/runner.py 每轮 set_run_id(thread_id)，
 # 之后所有节点日志自动带上这个 run_id，从而把同一轮 preprocess→…→summary 串成一条链。
 _run_id_var = contextvars.ContextVar("joker_run_id", default=None)
@@ -29,6 +31,11 @@ _run_id_var = contextvars.ContextVar("joker_run_id", default=None)
 def set_run_id(run_id: str | None) -> None:
     """设置当前上下文的一次调用标识。"""
     _run_id_var.set(run_id)
+    # 联动成本累加器：run_id 有效 → 开新账本；None → 丢弃账本
+    if run_id is None:
+        reset_run()
+    else:
+        start_run()
 
 
 def get_run_id() -> str | None:

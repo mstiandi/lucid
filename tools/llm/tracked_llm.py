@@ -12,6 +12,7 @@
 import time
 
 from tools.logger import get_logger
+from tools.llm.cost_tracker import record
 
 
 def _extract_usage(response) -> dict:
@@ -32,5 +33,6 @@ def invoke_with_tracking(llm, messages, *, node: str, attempt: int = 0):
     latency_ms = round((time.perf_counter() - start) * 1000)
 
     usage = _extract_usage(response)
+    record(node, usage["input_tokens"], usage["output_tokens"], latency_ms, attempt)
     log.info(node, "LLM调用", attempt=attempt, latency_ms=latency_ms, **usage)
     return response

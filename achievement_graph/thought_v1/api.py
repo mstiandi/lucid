@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 from .graph import app as graph_app
 from tools.logger import set_run_id
+from tools.llm.cost_report import log_run_summary
 
 
 class StreamRequest(BaseModel):
@@ -101,6 +102,7 @@ async def stream(req: StreamRequest):
                     if token:
                         yield _sse({"type": "token", "content": token})
 
+            log_run_summary()  # 本轮 LLM 汇总（token/重试/延迟），进日志不发给用户
             yield _sse({"type": "done", "thread_id": thread_id})
         except Exception as e:
             yield _sse({"type": "error", "message": str(e)})
