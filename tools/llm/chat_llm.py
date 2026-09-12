@@ -10,6 +10,8 @@ _common = dict(
     # trust_env=False：忽略系统代理环境变量。DeepSeek 是国产 API，直连即可；
     # 否则机器上若配了 http_proxy 但代理没运行，会连不上（Connection error）。
     http_client=httpx.Client(trust_env=False, timeout=300.0),
+    # 异步 client：让 ainvoke 是真异步。trust_env=False 与同步 client 同理，避开代理导致 DeepSeek 连不上。
+    http_async_client=httpx.AsyncClient(trust_env=False, timeout=300.0),
 )
 
 llm = ChatOpenAI(**_common)

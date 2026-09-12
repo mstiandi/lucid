@@ -9,13 +9,14 @@ LLM-as-Judge：用 chat_llm 独立评估 joker 的分析质量。
 - 双跑取均值——降低单次评分的偶然性
 """
 
+import asyncio
 import json
 
 from langchain.messages import SystemMessage
 from langchain.tools import tool
 
 from tools.llm.chat_llm import llm
-from tools.llm.safe_llm_call import safe_llm_call
+from tools.llm.safe_llm_call import safe_llm_call_async
 
 
 # ─── 格式化 joker 输出 ────────────────────────────────
@@ -98,9 +99,9 @@ def _to_int(v, default=0):
         return default
 
 
-def _run_single_coverage(prompt: str) -> dict | None:
+async def _run_single_coverage(prompt: str, llm) -> dict | None:
     """单次覆盖度评分调用。失败返回 None。"""
-    response = safe_llm_call(
+    response = await safe_llm_call_async(
         llm, [coverage_return],
         [SystemMessage(content=prompt)],
         node_name="COVERAGE_JUDGE"
@@ -115,7 +116,7 @@ def _run_single_coverage(prompt: str) -> dict | None:
     }
 
 
-def judge_coverage(scenario: dict, result: dict) -> dict:
+async def judge_coverage(scenario: dict, result: dict, llm=llm) -> dict:
     """
     LLM 判定：期望覆盖的关键方向是否在分析中出现。双跑取均值。
     """
@@ -148,8 +149,11 @@ def judge_coverage(scenario: dict, result: dict) -> dict:
 
 请统计 covered（完全或充分覆盖）和 missed（缺失或擦边）的关键点数，并给出一个简短评论。"""
 
-    # 双跑取均值
-    runs = [_run_single_coverage(prompt) for _ in range(2)]  # 双跑
+    # 双跑取均值（并发）
+    runs = await asyncio.gather(
+        _run_single_coverage(prompt, llm=llm),
+        _run_single_coverage(prompt, llm=llm),
+    )
     runs = [r for r in runs if r is not None]  # 过滤None
 
     if not runs:
@@ -202,9 +206,9 @@ _THEORY_MAP    = {"A": 1.0, "B": 0.5, "C": 0.2, "D": 0.0}
 _ACTION_MAP    = {"A": 1.0, "B": 0.5, "C": 0.0}
 
 
-def _run_single_correctness(prompt: str) -> dict | None:
+async def _run_single_correctness(prompt: str, llm) -> dict | None:
     """单次正确性评分调用。失败返回 None。"""
-    response = safe_llm_call(
+    response = await safe_llm_call_async(
         llm, [correctness_return],
         [SystemMessage(content=prompt)],
         node_name="CORRECTNESS_JUDGE"
@@ -228,7 +232,7 @@ def _run_single_correctness(prompt: str) -> dict | None:
     }
 
 
-def judge_correctness(scenario: dict, result: dict) -> dict:
+async def judge_correctness(scenario: dict, result: dict, llm=llm) -> dict:
     """
     LLM 判定：分析的质量。三道单选题 → 查表算分。双跑取均值。
     """
@@ -266,8 +270,11 @@ def judge_correctness(scenario: dict, result: dict) -> dict:
    B) 一般——给了方向但不具体（如"你要多沟通"但没有说怎么做）
    C) 无——分析停留在抽象描述层面，用户读完不知道怎么办"""
 
-    # 双跑取均值
-    runs = [_run_single_correctness(prompt) for _ in range(2)]
+    # 双跑取均值（并发）
+    runs = await asyncio.gather(
+        _run_single_correctness(prompt, llm=llm),
+        _run_single_correctness(prompt, llm=llm),
+    )
     runs = [r for r in runs if r is not None]
 
     if not runs:

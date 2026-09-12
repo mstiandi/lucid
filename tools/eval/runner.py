@@ -11,6 +11,7 @@
     - DEEPSEEK_API_KEY 环境变量已设置
 """
 
+import asyncio
 import json
 import os
 import sys
@@ -121,7 +122,7 @@ def _summarize(scenario_results: list[dict]) -> dict:
 
 # ─── 主入口 ───────────────────────────────────────────
 
-def run_eval(dataset_path: str | None = None):
+async def run_eval(dataset_path: str | None = None):
     if dataset_path is None:
         dataset_path = os.path.join(os.path.dirname(__file__), "golden_dataset.json")
 
@@ -172,13 +173,13 @@ def run_eval(dataset_path: str | None = None):
 
         # 2d. Coverage (LLM)
         t0 = time.time()
-        coverage = judge_coverage(sc, result)
+        coverage = await judge_coverage(sc, result)
         print(f"  [Coverage] {coverage['score']} ({coverage.get('comment', '?')[:60]}) "
               f"({time.time()-t0:.1f}s)")
 
         # 2e. Correctness (LLM)
         t0 = time.time()
-        correctness = judge_correctness(sc, result)
+        correctness = await judge_correctness(sc, result)
         print(f"  [Correctness] {correctness['total']} "
               f"(dir={correctness['direction']} theory={correctness['theory_usage']} "
               f"action={correctness['actionable']}) ({time.time()-t0:.1f}s)")
@@ -238,4 +239,4 @@ def run_eval(dataset_path: str | None = None):
 
 
 if __name__ == "__main__":
-    run_eval()
+    asyncio.run(run_eval())
